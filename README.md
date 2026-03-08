@@ -7,7 +7,7 @@
 ```
 traveldogs/
 ├── index.html          # Main shell (HTML only, no inline logic)
-├── css/
+├── styles/
 │   └── main.css        # All styles (bamboo theme)
 ├── js/
 │   └── app.js          # All app logic
@@ -53,72 +53,72 @@ Then open `http://localhost:3000` (or whichever port).
   "trips": [
     {
       // ── Trip metadata ──────────────────────────────
-      "id":          "dalat-2025",        // unique string ID
-      "name":        "🌿 Đà Lạt Trip",    // display name (emoji OK)
-      "emoji":       "🌿",               // card banner emoji
-      "dates":       "March 13–15, 2025", // human-readable date range
-      "persons":     4,                   // number of travellers
-      "departDate":  "2025-03-13T00:00:00", // ISO date for countdown (null = no countdown)
-      "placeholder": false,              // true = greyed-out "coming soon" card
+      "id": "dalat-2025", // unique string ID
+      "name": "🌿 Đà Lạt Trip", // display name (emoji OK)
+      "emoji": "🌿", // card banner emoji
+      "dates": "March 13–15, 2025", // human-readable date range
+      "persons": 4, // number of travellers
+      "departDate": "2025-03-13T00:00:00", // ISO date for countdown (null = no countdown)
+      "placeholder": false, // true = greyed-out "coming soon" card
 
       // ── Days array ─────────────────────────────────
       "days": [
         {
-          "id":    "day-1",           // unique string ID
+          "id": "day-1", // unique string ID
           "label": "Day 1 – Đà Lạt", // tab label
-          "date":  "March 13",        // sub-label shown on timeline header
+          "date": "March 13", // sub-label shown on timeline header
 
           // ── Timeline items ──────────────────────────
           "items": [
             {
-              "id":        "d1_1",         // unique string ID
-              "time":      "08:00",        // 24h time string (for sorting)
-              "timeLabel": "8:00 AM",      // display label
+              "id": "d1_1", // unique string ID
+              "time": "08:00", // 24h time string (for sorting)
+              "timeLabel": "8:00 AM", // display label
 
-              "task":  "Ăn sáng",         // short activity title
-              "type":  "food",            // see Type values below
+              "task": "Ăn sáng", // short activity title
+              "type": "food", // see Type values below
 
               // From location (always required)
               "from": {
-                "name":   "Mì quảng Dì Út",
-                "lat":    11.9455,
-                "lng":    108.4362,
-                "mapUrl": "https://maps.app.goo.gl/..." // or null
+                "name": "Mì quảng Dì Út",
+                "lat": 11.9455,
+                "lng": 108.4362,
+                "mapUrl": "https://maps.app.goo.gl/...", // or null
               },
 
               // To location (null if single-point activity)
               "to": {
-                "name":   "Quảng trường Lâm Viên",
-                "lat":    11.9358,
-                "lng":    108.4416,
-                "mapUrl": "https://maps.app.goo.gl/..." // or null
+                "name": "Quảng trường Lâm Viên",
+                "lat": 11.9358,
+                "lng": 108.4416,
+                "mapUrl": "https://maps.app.goo.gl/...", // or null
               },
               // ↑ set "to": null for single-location items
 
-              "transport": "Xe máy",      // free text: Grab, Đi bộ, Xe khách…
+              "transport": "Xe máy", // free text: Grab, Đi bộ, Xe khách…
 
               // Cost object — set to null if no cost info
               "cost": {
-                "total":     200000,      // total for the group (VND)
-                "perPerson": 50000,       // per person (VND), null if N/A
-                "note":      "50k/phần"   // free text note about the cost
+                "total": 200000, // total for the group (VND)
+                "perPerson": 50000, // per person (VND), null if N/A
+                "note": "50k/phần", // free text note about the cost
               },
 
-              "note":    "Nếu nghỉ bán thì...", // optional tip / note
-              "preBook": false,          // true = show "⚠️ Cần đặt trước" badge
+              "note": "Nếu nghỉ bán thì...", // optional tip / note
+              "preBook": false, // true = show "⚠️ Cần đặt trước" badge
 
               // Content array — for future photo/video upload feature
               // Each item: { "type": "image"|"video"|"link", "url": "...", "caption": "..." }
-              "content": []
-            }
+              "content": [],
+            },
             // … more items
-          ]
-        }
+          ],
+        },
         // … more days
-      ]
-    }
+      ],
+    },
     // … more trips
-  ]
+  ],
 }
 ```
 
@@ -126,22 +126,23 @@ Then open `http://localhost:3000` (or whichever port).
 
 ## 🏷️ Item `type` values
 
-| Value     | Badge colour | Meaning              |
-|-----------|-------------|----------------------|
-| `travel`  | Blue        | Transport / moving   |
-| `food`    | Yellow      | Eating / drinking    |
-| `photo`   | Red         | Check-in / content   |
-| `hotel`   | Teal        | Hotel / accommodation|
-| `shop`    | Purple      | Shopping             |
-| `coffee`  | Brown       | Café                 |
-| `night`   | Dark blue   | Night activity       |
-| `sleep`   | Grey-blue   | Sleep / rest         |
+| Value    | Badge colour | Meaning               |
+| -------- | ------------ | --------------------- |
+| `travel` | Blue         | Transport / moving    |
+| `food`   | Yellow       | Eating / drinking     |
+| `photo`  | Red          | Check-in / content    |
+| `hotel`  | Teal         | Hotel / accommodation |
+| `shop`   | Purple       | Shopping              |
+| `coffee` | Brown        | Café                  |
+| `night`  | Dark blue    | Night activity        |
+| `sleep`  | Grey-blue    | Sleep / rest          |
 
 ---
 
 ## ➕ Adding a new day or activity
 
 **New activity** — add an object to the `items` array of the correct day:
+
 ```json
 {
   "id": "d1_18",
@@ -149,7 +150,12 @@ Then open `http://localhost:3000` (or whichever port).
   "timeLabel": "9:00 AM",
   "task": "Tên hoạt động",
   "type": "photo",
-  "from": { "name": "Tên địa điểm", "lat": 11.9400, "lng": 108.4400, "mapUrl": null },
+  "from": {
+    "name": "Tên địa điểm",
+    "lat": 11.94,
+    "lng": 108.44,
+    "mapUrl": null
+  },
   "to": null,
   "transport": "Xe máy",
   "cost": { "total": 0, "perPerson": 0, "note": "" },
@@ -160,12 +166,15 @@ Then open `http://localhost:3000` (or whichever port).
 ```
 
 **New day** — add an object to the `days` array:
+
 ```json
 {
   "id": "day-2",
   "label": "Day 2 – Đà Lạt",
   "date": "March 14",
-  "items": [ /* ... */ ]
+  "items": [
+    /* ... */
+  ]
 }
 ```
 

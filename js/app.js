@@ -102,7 +102,7 @@ window.toggleMobilePanel = function () {
 // ─── LOAD DATA ────────────────────────────
 async function loadData() {
   try {
-    const res = await fetch("./trips.json");
+    const res = await fetch("./data/trips.json");
     if (!res.ok) throw new Error("Failed to load trips.json");
     const json = await res.json();
     State.trips = json.trips;
@@ -705,21 +705,21 @@ window.toggleDropdown = function () {
   const isOpening = !menu.classList.contains("open");
   menu.classList.toggle("open");
 
-  // If we just opened it, find the active item and scroll it into the center
+  // If we just opened it, scroll manually to avoid layout jumping
   if (isOpening) {
-    // We use a tiny setTimeout because the browser needs 1 millisecond
-    // to render 'display: block' before it can calculate scroll positions.
     setTimeout(() => {
       const activeItem = menu.querySelector(".dropdown-item.active");
       if (activeItem) {
-        activeItem.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
+        // Mathematically center the item purely inside the dropdown container
+        menu.scrollTop =
+          activeItem.offsetTop -
+          menu.clientHeight / 2 +
+          activeItem.clientHeight / 2;
       }
     }, 10);
   }
 };
+
 function closeDropdown() {
   document.getElementById("dropdown-menu").classList.remove("open");
 }

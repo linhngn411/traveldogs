@@ -101,7 +101,7 @@
               "transport": "Grab / Trung chuyển",
               "cost": {
                 "total": 200000,
-                "perPerson": null,
+                "perPerson": 50000,
                 "note": "Thuê 2 xe máy"
               },
               "note": "Thuê xe máy ở đây hoặc chỗ kế bên. 2 chiếc xe máy.",
@@ -478,10 +478,84 @@
           "items": [
             {
               "id": "d2_1",
+              "time": "03:30",
+              "timeLabel": "3:30 AM",
+              "task": "Thức dậy, lọ chéo tỉnh ngủ",
+              "type": "sleep",
+              "from": {
+                "name": "LATA Hotel & Apartments",
+                "lat": 11.9421,
+                "lng": 108.438,
+                "mapUrl": null
+              },
+              "to": null,
+              "transport": "Đi bộ",
+              "cost": {
+                "total": 200000,
+                "perPerson": 50000,
+                "note": "Tiền thuê xe máy cả ngày"
+              },
+              "note": "ai rề thì 3h thức",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_2",
+              "time": "05:00",
+              "timeLabel": "5:00 AM",
+              "task": "Săn mây Cây thông cô đơn",
+              "type": "photo",
+              "from": {
+                "name": "Cây thông cô đơn",
+                "lat": 12.0,
+                "lng": 108.38,
+                "mapUrl": "https://maps.app.goo.gl/CkGPz7G4GoUf6C8JA"
+              },
+              "to": null,
+              "transport": "Đò",
+              "cost": {
+                "total": 320000,
+                "perPerson": 80000,
+                "note": "Tiền đò"
+              },
+              "note": "",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_3",
+              "time": "06:00",
+              "timeLabel": "6:00 AM",
+              "task": "Đập Ankroet & Măng Lin",
+              "type": "photo",
+              "from": {
+                "name": "Đập Ankroet",
+                "lat": 11.995,
+                "lng": 108.385,
+                "mapUrl": "https://maps.app.goo.gl/CW9xY6XxMS29k45d6Đồi"
+              },
+              "to": {
+                "name": "Đồi cỏ hồng Măng Lin",
+                "lat": 11.96,
+                "lng": 108.4,
+                "mapUrl": "https://maps.app.goo.gl/PtqmNgahXs6Vc7xV67:15"
+              },
+              "transport": "Xe máy",
+              "cost": {
+                "total": 0,
+                "perPerson": 0,
+                "note": ""
+              },
+              "note": "Tiện đường về ghé ngang. keep silence",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_4",
               "time": "07:00",
               "timeLabel": "7:00 AM",
-              "task": "Ngày 2 – Sắp cập nhật!",
-              "type": "travel",
+              "task": "Về lại khách sạn",
+              "type": "hotel",
               "from": {
                 "name": "LATA Hotel & Apartments",
                 "lat": 11.9421,
@@ -491,7 +565,263 @@
               "to": null,
               "transport": "Xe máy",
               "cost": null,
-              "note": "Chi tiết lịch trình ngày 2 sẽ được cập nhật sớm.",
+              "note": "thay đồ rửa mặt gì đó",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_5",
+              "time": "07:30",
+              "timeLabel": "7:30 AM",
+              "task": "Ăn sáng – Bánh mì xíu mại ri 79",
+              "type": "food",
+              "from": {
+                "name": "Bánh Mì Xíu Mại Ri 79",
+                "lat": 11.94,
+                "lng": 108.44,
+                "mapUrl": "https://maps.app.goo.gl/gVuQtrY9hxQsZzD46"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 120000,
+                "perPerson": 30000,
+                "note": "Đồ ăn sáng"
+              },
+              "note": "Đối diện cây xăng Tỉnh Đội",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_6",
+              "time": "09:00",
+              "timeLabel": "9:00 AM",
+              "task": "Đi chơi MongoLand",
+              "type": "travel",
+              "from": {
+                "name": "Mongo Land - Đà Lạt",
+                "lat": 11.89,
+                "lng": 108.35,
+                "mapUrl": "https://maps.app.goo.gl/Dnu6ny5zKefWLHnB611:30"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 480000,
+                "perPerson": 120000,
+                "note": "Vé tham quan"
+              },
+              "note": "",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_7",
+              "time": "12:30",
+              "timeLabel": "12:30 PM",
+              "task": "Ăn trưa – Hủ tiếu Dậu",
+              "type": "food",
+              "from": {
+                "name": "Hủ Tiếu Dậu Đà Lạt",
+                "lat": 11.94,
+                "lng": 108.435,
+                "mapUrl": "https://maps.app.goo.gl/d3PtqbXfo6g7fubh6Tiện"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 200000,
+                "perPerson": 50000,
+                "note": "Đồ ăn trưa"
+              },
+              "note": "Ô tô đi Nguyễn Thị Định. rcm ăn hủ tiếu sá sùng",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_8",
+              "time": "13:30",
+              "timeLabel": "1:30 PM",
+              "task": "Tiện đường đi ngang Dốc nhà bò",
+              "type": "photo",
+              "from": {
+                "name": "Dốc Nhà Bò",
+                "lat": 11.934,
+                "lng": 108.432,
+                "mapUrl": "https://maps.app.goo.gl/zZYo1YcMbRw8FbGH92:00"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": null,
+              "note": "",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_9",
+              "time": "14:00",
+              "timeLabel": "2:00 PM",
+              "task": "Cafe Rừng Nauy",
+              "type": "coffee",
+              "from": {
+                "name": "RỪNG NA UY cafe",
+                "lat": 11.935,
+                "lng": 108.45,
+                "mapUrl": "https://maps.app.goo.gl/d5wJSxDDGWYvVGFD83:30"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 200000,
+                "perPerson": 50000,
+                "note": "Nước uống"
+              },
+              "note": "backup: Tiệm cà phê Cheo veooo, Tiệm Cà Phê Túi Mơ To",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_10",
+              "time": "15:00",
+              "timeLabel": "3:00 PM",
+              "task": "Chụp hình, quay content Góc trời Âu",
+              "type": "photo",
+              "from": {
+                "name": "Góc Trời Âu - Đà Lạt",
+                "lat": 11.94,
+                "lng": 108.43,
+                "mapUrl": "https://maps.app.goo.gl/gmuAiT6u1jvXFbmT94:00"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": null,
+              "note": "tiện đường đi ngang",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_11",
+              "time": "16:00",
+              "timeLabel": "4:00 PM",
+              "task": "Về ks tắm rửa",
+              "type": "hotel",
+              "from": {
+                "name": "LATA Hotel & Apartments",
+                "lat": 11.9421,
+                "lng": 108.438,
+                "mapUrl": null
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": null,
+              "note": "",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_12",
+              "time": "17:30",
+              "timeLabel": "5:30 PM",
+              "task": "Chụp hình Tháp Effeil",
+              "type": "photo",
+              "from": {
+                "name": "Tháp Viễn thông Đà Lạt",
+                "lat": 11.9445,
+                "lng": 108.4352,
+                "mapUrl": "https://maps.app.goo.gl/b5pSaW65ZTvB7DE2A6:30"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": null,
+              "note": "tháp lên đèn lúc 6h",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_13",
+              "time": "18:30",
+              "timeLabel": "6:30 PM",
+              "task": "Ăn tối LGBT – Lẩu gà lá é Phú Yên",
+              "type": "food",
+              "from": {
+                "name": "Lẩu gà lá é Phú Yên",
+                "lat": 11.945,
+                "lng": 108.44,
+                "mapUrl": "https://maps.app.goo.gl/4EnuZuwEgydQv6Qq97:30"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 400000,
+                "perPerson": 100000,
+                "note": "Ăn tối"
+              },
+              "note": "backup: Lẩu gà lá é-gà nướng lu 668, Quán lẩu bò Bbx",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_14",
+              "time": "19:30",
+              "timeLabel": "7:30 PM",
+              "task": "Đi cf nghe nhạc + coi pháo bông",
+              "type": "coffee",
+              "from": {
+                "name": "Tiệm cà phê Bình Minh Ơi",
+                "lat": 11.93,
+                "lng": 108.45,
+                "mapUrl": "https://maps.app.goo.gl/7d8Q6p1QVa91AoPy6"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 640000,
+                "perPerson": 160000,
+                "note": "Giá vé + nước"
+              },
+              "note": "Coi bắn pháo bông lúc 9:00 PM",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_15",
+              "time": "21:45",
+              "timeLabel": "9:45 PM",
+              "task": "Ăn tàu hủ ngắm hoa đào",
+              "type": "food",
+              "from": {
+                "name": "Tiệm tàu hủ Đà Lạt",
+                "lat": 11.942,
+                "lng": 108.438,
+                "mapUrl": "https://maps.app.goo.gl/nMrqn4egdTyDNUQb710:00"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 80000,
+                "perPerson": 20000,
+                "note": "Ăn vặt"
+              },
+              "note": "có thể skip",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d2_16",
+              "time": "22:30",
+              "timeLabel": "10:30 PM",
+              "task": "Về lại ks ngủ ngơi",
+              "type": "sleep",
+              "from": {
+                "name": "LATA Hotel & Apartments",
+                "lat": 11.9421,
+                "lng": 108.438,
+                "mapUrl": null
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": null,
+              "note": "Kết thúc Day 2",
               "preBook": false,
               "content": []
             }
@@ -504,9 +834,139 @@
           "items": [
             {
               "id": "d3_1",
+              "time": "03:30",
+              "timeLabel": "3:30 AM",
+              "task": "Wake up",
+              "type": "sleep",
+              "from": {
+                "name": "LATA Hotel & Apartments",
+                "lat": 11.9421,
+                "lng": 108.438,
+                "mapUrl": null
+              },
+              "to": null,
+              "transport": "Đi bộ",
+              "cost": {
+                "total": 200000,
+                "perPerson": 50000,
+                "note": "Tiền thuê xe máy cả ngày"
+              },
+              "note": "",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d3_2",
+              "time": "05:00",
+              "timeLabel": "5:00 AM",
+              "task": "Săn mây cầu gỗ",
+              "type": "photo",
+              "from": {
+                "name": "Săn Mây Cầu Gỗ - Bình Minh",
+                "lat": 11.9,
+                "lng": 108.48,
+                "mapUrl": "https://maps.app.goo.gl/tFzGaEBRKdmp33g188:20"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 480000,
+                "perPerson": 120000,
+                "note": "Vé bao gồm nước + đồ ăn"
+              },
+              "note": "",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d3_3",
+              "time": "08:00",
+              "timeLabel": "8:00 AM",
+              "task": "Cafe sáng Hidden land",
+              "type": "coffee",
+              "from": {
+                "name": "Hidden Land Đà Lạt",
+                "lat": 11.91,
+                "lng": 108.44,
+                "mapUrl": "https://maps.app.goo.gl/ZaqVmiX7HJqUdcxQ6"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 200000,
+                "perPerson": 50000,
+                "note": "Nước uống"
+              },
+              "note": "",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d3_4",
+              "time": "09:00",
+              "timeLabel": "9:00 AM",
+              "task": "Checkin Biệt thự cô Giang",
+              "type": "photo",
+              "from": {
+                "name": "Biệt thự Hoa Hồng",
+                "lat": 11.94,
+                "lng": 108.445,
+                "mapUrl": "https://maps.app.goo.gl/onrvWWaFn1Niivjq8"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": null,
+              "note": "Tiện đường về",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d3_5",
+              "time": "10:00",
+              "timeLabel": "10:00 AM",
+              "task": "Mua đồ Đặc sản Ngon Lạ Đà Lạt 3/2",
+              "type": "shop",
+              "from": {
+                "name": "Đặc sản Ngon Lạ Đà Lạt 3/2",
+                "lat": 11.943,
+                "lng": 108.436,
+                "mapUrl": "https://maps.app.goo.gl/MmrTby2shh8sYKCw611:00"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": null,
+              "note": "Tự chi",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d3_6",
+              "time": "11:00",
+              "timeLabel": "11:00 AM",
+              "task": "Ăn trưa Phở Nguyễn Gia",
+              "type": "food",
+              "from": {
+                "name": "Phở Nguyễn Gia",
+                "lat": 11.9421,
+                "lng": 108.4385,
+                "mapUrl": "https://maps.app.goo.gl/tNFPnWRwAU43ttRVA12:00"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 200000,
+                "perPerson": 50000,
+                "note": "Ăn trưa"
+              },
+              "note": "Kế bên Lata",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d3_7",
               "time": "12:00",
               "timeLabel": "12:00 PM",
-              "task": "Trở về Cần Thơ",
+              "task": "Trở về Cần Thơ (Check out)",
               "type": "travel",
               "from": {
                 "name": "Bến xe Đà Lạt",
