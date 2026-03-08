@@ -1,0 +1,548 @@
+{
+  "trips": [
+    {
+      "id": "dalat-2026",
+      "name": "🌿 Đà Lạt Trip",
+      "emoji": "🌿",
+      "dates": "March 13–15, 2026",
+      "persons": 4,
+      "departDate": "2026-03-13T00:00:00",
+      "days": [
+        {
+          "id": "day-0",
+          "label": "Day 0 – Travel",
+          "date": "March 12–13",
+          "items": [
+            {
+              "id": "d0_1",
+              "time": "20:00",
+              "timeLabel": "8:00 PM",
+              "task": "Khởi hành từ Bến xe Cần Thơ",
+              "type": "travel",
+              "from": {
+                "name": "Bến xe Cần Thơ",
+                "lat": 10.0341,
+                "lng": 105.7852,
+                "mapUrl": null
+              },
+              "to": null,
+              "transport": "Xe khách",
+              "cost": {
+                "total": 460000,
+                "perPerson": 115000,
+                "note": "Vé xe khách"
+              },
+              "note": "Đặt vé trước, lên xe đúng giờ.",
+              "preBook": true,
+              "content": []
+            },
+            {
+              "id": "d0_2",
+              "time": "06:00",
+              "timeLabel": "6:00 AM (+1)",
+              "task": "Đến Bến xe Đà Lạt",
+              "type": "travel",
+              "from": {
+                "name": "Bến xe Đà Lạt",
+                "lat": 11.9417,
+                "lng": 108.4448,
+                "mapUrl": null
+              },
+              "to": null,
+              "transport": "Xe khách",
+              "cost": null,
+              "note": "Hành trình ~10 tiếng. Ngủ trên xe.",
+              "preBook": false,
+              "content": []
+            }
+          ]
+        },
+        {
+          "id": "day-1",
+          "label": "Day 1 – Đà Lạt",
+          "date": "March 13",
+          "items": [
+            {
+              "id": "d1_1",
+              "time": "08:00",
+              "timeLabel": "8:00 AM",
+              "task": "Đến bến xe Đà Lạt, kiếm Thuận",
+              "type": "travel",
+              "from": {
+                "name": "Bến xe Đà Lạt – Tô Hiến Thành, P.3",
+                "lat": 11.9417,
+                "lng": 108.4448,
+                "mapUrl": null
+              },
+              "to": null,
+              "transport": "Đi bộ",
+              "cost": {
+                "total": 460000,
+                "perPerson": 115000,
+                "note": "Vé xe đêm"
+              },
+              "note": "Tập hợp nhóm, tìm Thuận tại bến.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_2",
+              "time": "08:20",
+              "timeLabel": "8:20 AM",
+              "task": "Gửi đồ ở khách sạn, check-in sớm nếu có",
+              "type": "hotel",
+              "from": {
+                "name": "LATA Hotel & Apartments",
+                "lat": 11.9421,
+                "lng": 108.438,
+                "mapUrl": "https://maps.app.goo.gl/VckcJE12ynTBy9MLA"
+              },
+              "to": null,
+              "transport": "Grab / Trung chuyển",
+              "cost": {
+                "total": 200000,
+                "perPerson": null,
+                "note": "Thuê 2 xe máy"
+              },
+              "note": "Thuê xe máy ở đây hoặc chỗ kế bên. 2 chiếc xe máy.",
+              "preBook": true,
+              "content": []
+            },
+            {
+              "id": "d1_3",
+              "time": "08:45",
+              "timeLabel": "8:45 AM",
+              "task": "Ăn sáng",
+              "type": "food",
+              "from": {
+                "name": "Mì quảng Dì Út",
+                "lat": 11.9455,
+                "lng": 108.4362,
+                "mapUrl": null
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 200000,
+                "perPerson": 50000,
+                "note": "Tô mì quảng"
+              },
+              "note": "Nếu nghỉ bán thì gần đó có nhiều tiệm mì, pick 1 tiệm.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_4",
+              "time": "10:00",
+              "timeLabel": "10:00 AM",
+              "task": "Chụp ảnh, quay content – Dốc sương Nguyệt Ánh",
+              "type": "photo",
+              "from": {
+                "name": "Dốc sương Nguyệt Ánh",
+                "lat": 11.9489,
+                "lng": 108.4395,
+                "mapUrl": "https://maps.app.goo.gl/1DXsAECScVMpQ6qK9"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 0,
+                "perPerson": 0,
+                "note": "Miễn phí"
+              },
+              "note": "Điểm check-in nổi tiếng, ánh sáng đẹp buổi sáng.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_5",
+              "time": "10:30",
+              "timeLabel": "10:30 AM",
+              "task": "Tham quan Ga Đà Lạt",
+              "type": "photo",
+              "from": {
+                "name": "Ga Đà Lạt (Da Lat Railway Station)",
+                "lat": 11.9419,
+                "lng": 108.4506,
+                "mapUrl": "https://maps.app.goo.gl/WxaAT7AhZ6fZtRXs7"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 0,
+                "perPerson": 0,
+                "note": "Miễn phí"
+              },
+              "note": "Chụp ảnh ngoài sân ga, kiến trúc Pháp cổ kính.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_6",
+              "time": "11:00",
+              "timeLabel": "11:00 AM",
+              "task": "Dạo Hồ Xuân Hương → Quảng trường Lâm Viên",
+              "type": "photo",
+              "from": {
+                "name": "Hồ Xuân Hương",
+                "lat": 11.9389,
+                "lng": 108.4397,
+                "mapUrl": "https://maps.app.goo.gl/1D6zGe5hqPGKdSL5A"
+              },
+              "to": {
+                "name": "Quảng trường Lâm Viên",
+                "lat": 11.9358,
+                "lng": 108.4416,
+                "mapUrl": "https://maps.app.goo.gl/gMqicFdUnLGg8qGD9"
+              },
+              "transport": "Đi bộ (gửi xe ở Go!)",
+              "cost": {
+                "total": 0,
+                "perPerson": 0,
+                "note": "Miễn phí"
+              },
+              "note": "Gửi xe bên Go! Đà Lạt rồi đi bộ. Quanh hồ rất đẹp.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_7",
+              "time": "11:30",
+              "timeLabel": "11:30 AM",
+              "task": "Mua sắm tại Go! Đà Lạt",
+              "type": "shop",
+              "from": {
+                "name": "GO! Đà Lạt",
+                "lat": 11.9374,
+                "lng": 108.4409,
+                "mapUrl": "https://maps.app.goo.gl/1Vxr8y16MDB5PDWv5"
+              },
+              "to": null,
+              "transport": "Đi bộ",
+              "cost": {
+                "total": 100000,
+                "perPerson": 25000,
+                "note": "Đồ linh tinh"
+              },
+              "note": "Tránh nóng, mua đồ linh tinh, chụp photobooth.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_8",
+              "time": "12:15",
+              "timeLabel": "12:15 PM",
+              "task": "Check-in Tháp truyền hình & Dốc Mơ Café",
+              "type": "photo",
+              "from": {
+                "name": "Tháp Truyền Hình – 14b Đống Đa",
+                "lat": 11.9445,
+                "lng": 108.4352,
+                "mapUrl": "https://maps.app.goo.gl/7XjUWXFRWEhstEAe8"
+              },
+              "to": {
+                "name": "Dốc Mơ Café",
+                "lat": 11.9432,
+                "lng": 108.4368,
+                "mapUrl": "https://maps.app.goo.gl/7XjUWXFRWEhstEAe8"
+              },
+              "transport": "Xe máy",
+              "cost": {
+                "total": 0,
+                "perPerson": 0,
+                "note": "Miễn phí"
+              },
+              "note": "Ghé check-in nhanh, cạnh quán cà phê view đẹp.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_9",
+              "time": "13:00",
+              "timeLabel": "1:00 PM",
+              "task": "Ăn trưa – Bánh ướt lòng gà Long",
+              "type": "food",
+              "from": {
+                "name": "Bánh ướt lòng gà LONG",
+                "lat": 11.9461,
+                "lng": 108.439,
+                "mapUrl": "https://maps.app.goo.gl/Xaf5e9yRXEC99LcS8"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 200000,
+                "perPerson": 50000,
+                "note": "50k/phần"
+              },
+              "note": "50k/phần. Đặc sản Đà Lạt, đừng bỏ qua!",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_10",
+              "time": "14:00",
+              "timeLabel": "2:00 PM",
+              "task": "Check-in khách sạn, nghỉ ngơi",
+              "type": "hotel",
+              "from": {
+                "name": "LATA Hotel & Apartments",
+                "lat": 11.9421,
+                "lng": 108.438,
+                "mapUrl": "https://maps.app.goo.gl/VckcJE12ynTBy9MLA"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 0,
+                "perPerson": 0,
+                "note": "Đã đặt phòng"
+              },
+              "note": "Ải đía, nghỉ ngơi, lọ chéo 😂",
+              "preBook": true,
+              "content": []
+            },
+            {
+              "id": "d1_11",
+              "time": "15:30",
+              "timeLabel": "3:30 PM",
+              "task": "Chụp ảnh – Bức tường Hàn Quốc + Cung đường Bắc Âu",
+              "type": "photo",
+              "from": {
+                "name": "Bức tường Hàn Quốc tại Đà Lạt",
+                "lat": 11.9352,
+                "lng": 108.4289,
+                "mapUrl": "https://maps.app.goo.gl/8p4qU2S5H9xWDi7k6"
+              },
+              "to": {
+                "name": "Cung đường Bắc Âu",
+                "lat": 11.931,
+                "lng": 108.4265,
+                "mapUrl": "https://maps.app.goo.gl/hc6ET3isYSt46y6x7"
+              },
+              "transport": "Xe máy",
+              "cost": {
+                "total": 0,
+                "perPerson": 0,
+                "note": "Miễn phí"
+              },
+              "note": "Gần đó ghé Cơ Sở Đặc Sản Mứt Đà Lạt Mỹ Quyên.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_12",
+              "time": "16:00",
+              "timeLabel": "4:00 PM",
+              "task": "Mua đặc sản – Mứt Đà Lạt Mỹ Quyên",
+              "type": "shop",
+              "from": {
+                "name": "Cơ Sở Đặc Sản Mứt Đà Lạt Mỹ Quyên",
+                "lat": 11.9325,
+                "lng": 108.4278,
+                "mapUrl": "https://maps.app.goo.gl/A739Y9ewn8YEmbtNA"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": null,
+              "note": "Tự chi, mua quà về.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_13",
+              "time": "16:30",
+              "timeLabel": "4:30 PM",
+              "task": "Về lại khách sạn",
+              "type": "hotel",
+              "from": {
+                "name": "LATA Hotel & Apartments",
+                "lat": 11.9421,
+                "lng": 108.438,
+                "mapUrl": "https://maps.app.goo.gl/VckcJE12ynTBy9MLA"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 0,
+                "perPerson": 0,
+                "note": ""
+              },
+              "note": "Tắm rửa, nghỉ ngơi trước khi đi ăn tối.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_14",
+              "time": "18:00",
+              "timeLabel": "6:00 PM",
+              "task": "Ăn tối – Quán nướng Chill in Dalat",
+              "type": "food",
+              "from": {
+                "name": "Quán Nướng Chill in Dalat",
+                "lat": 11.9398,
+                "lng": 108.4352,
+                "mapUrl": "https://maps.app.goo.gl/VNm3545JTbycoQRp8"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 400000,
+                "perPerson": 100000,
+                "note": "Gà nướng + cơm lam"
+              },
+              "note": "Gà nướng + cơm lam. Đặt bàn trước nếu có thể.",
+              "preBook": true,
+              "content": []
+            },
+            {
+              "id": "d1_15",
+              "time": "19:30",
+              "timeLabel": "7:30 PM",
+              "task": "Foodtour – Chợ đêm Đà Lạt + Hong Kong photo spot",
+              "type": "night",
+              "from": {
+                "name": "Chợ đêm Đà Lạt",
+                "lat": 11.9408,
+                "lng": 108.4392,
+                "mapUrl": "https://maps.app.goo.gl/dJ7RUF6nepNdZnEC6"
+              },
+              "to": {
+                "name": "Khu chụp hình Hong Kong",
+                "lat": 11.9415,
+                "lng": 108.4385,
+                "mapUrl": "https://maps.app.goo.gl/zSUDbUh5L8t4M4MN7"
+              },
+              "transport": "Xe máy",
+              "cost": {
+                "total": 200000,
+                "perPerson": 50000,
+                "note": "50k/đứa thích gì mua đó"
+              },
+              "note": "50k/đứa thích gì mua đó. Tìm cầu thang siêu dài bên hông chợ.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_16",
+              "time": "20:30",
+              "timeLabel": "8:30 PM",
+              "task": "Cà phê đốt lửa – Bliss Coffee",
+              "type": "coffee",
+              "from": {
+                "name": "Bliss Coffee Đà Lạt",
+                "lat": 11.9445,
+                "lng": 108.4421,
+                "mapUrl": "https://maps.app.goo.gl/FHZT4hNMxCTABkdW8"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 160000,
+                "perPerson": 40000,
+                "note": "Đồ uống"
+              },
+              "note": "Vibe đốt lửa cực chill, view thành phố về đêm.",
+              "preBook": false,
+              "content": []
+            },
+            {
+              "id": "d1_17",
+              "time": "22:30",
+              "timeLabel": "10:30 PM",
+              "task": "Về lại khách sạn & nghỉ ngơi 💤",
+              "type": "sleep",
+              "from": {
+                "name": "LATA Hotel & Apartments",
+                "lat": 11.9421,
+                "lng": 108.438,
+                "mapUrl": "https://maps.app.goo.gl/VckcJE12ynTBy9MLA"
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": {
+                "total": 0,
+                "perPerson": 0,
+                "note": ""
+              },
+              "note": "Bemmmmmm 😴",
+              "preBook": false,
+              "content": []
+            }
+          ]
+        },
+        {
+          "id": "day-2",
+          "label": "Day 2 – Đà Lạt",
+          "date": "March 14",
+          "items": [
+            {
+              "id": "d2_1",
+              "time": "07:00",
+              "timeLabel": "7:00 AM",
+              "task": "Ngày 2 – Sắp cập nhật!",
+              "type": "travel",
+              "from": {
+                "name": "LATA Hotel & Apartments",
+                "lat": 11.9421,
+                "lng": 108.438,
+                "mapUrl": null
+              },
+              "to": null,
+              "transport": "Xe máy",
+              "cost": null,
+              "note": "Chi tiết lịch trình ngày 2 sẽ được cập nhật sớm.",
+              "preBook": false,
+              "content": []
+            }
+          ]
+        },
+        {
+          "id": "day-3",
+          "label": "Day 3 – Return",
+          "date": "March 15",
+          "items": [
+            {
+              "id": "d3_1",
+              "time": "12:00",
+              "timeLabel": "12:00 PM",
+              "task": "Trở về Cần Thơ",
+              "type": "travel",
+              "from": {
+                "name": "Bến xe Đà Lạt",
+                "lat": 11.9417,
+                "lng": 108.4448,
+                "mapUrl": null
+              },
+              "to": {
+                "name": "Bến xe Cần Thơ",
+                "lat": 10.0341,
+                "lng": 105.7852,
+                "mapUrl": null
+              },
+              "transport": "Xe khách",
+              "cost": {
+                "total": 460000,
+                "perPerson": 115000,
+                "note": "Vé xe khách"
+              },
+              "note": "Đặt vé trước. Khoảng 10 tiếng.",
+              "preBook": true,
+              "content": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "beach-trip",
+      "name": "🏖️ Beach Trip",
+      "emoji": "🏖️",
+      "dates": "TBD",
+      "persons": 0,
+      "departDate": null,
+      "placeholder": true,
+      "days": []
+    }
+  ]
+}

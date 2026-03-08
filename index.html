@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TravelDogs 🐾</title>
+
+    <!-- Leaflet CSS (must load before JS) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <!-- App styles -->
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <!-- ═══ NAV ═══════════════════════════════════════════ -->
+    <nav id="main-nav">
+      <div class="nav-logo" onclick="goHome()"><span>🐾</span> TravelDogs</div>
+      <div class="nav-right">
+        <div class="nav-back" id="nav-back" onclick="handleBack()"></div>
+      </div>
+    </nav>
+
+    <!-- ═══ HOME PAGE ══════════════════════════════════════ -->
+    <div class="page active" id="home-page">
+      <div class="home-hero">
+        <h1>TravelDogs 🐾</h1>
+        <p>Your adventure companion — plan, explore, create.</p>
+      </div>
+      <div class="projects-section">
+        <div class="section-heading">🗺️ Chuyến đi của bạn</div>
+        <div class="projects-grid" id="projects-grid">
+          <div
+            style="
+              padding: 40px;
+              text-align: center;
+              color: var(--text-light);
+              grid-column: 1/-1;
+            "
+          >
+            ⏳ Đang tải dữ liệu...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TIMELINE PAGE ══════════════════════════════════ -->
+    <div class="page" id="timeline-page">
+      <div class="timeline-header">
+        <h2 id="tl-trip-name"></h2>
+        <p id="tl-trip-dates"></p>
+      </div>
+      <div class="day-tabs" id="day-tabs"></div>
+      <div class="timeline-wrap" id="timeline-wrap"></div>
+    </div>
+
+    <!-- ═══ DETAIL PAGE ════════════════════════════════════ -->
+    <div class="page" id="detail-page">
+      <!-- Top bar -->
+
+      <!-- Body: map + info panel -->
+      <div class="detail-body">
+        <!-- Map -->
+        <div class="map-panel">
+          <div id="detail-map"></div>
+        </div>
+
+        <!-- Info panel -->
+        <div class="info-panel" id="info-panel">
+          <div
+            class="pull-handle"
+            id="pull-handle"
+            onclick="toggleMobilePanel()"
+          ></div>
+          <div class="detail-topbar">
+            <button
+              class="icon-btn"
+              id="btn-prev"
+              onclick="navigateDetail(-1)"
+              title="Previous"
+            >
+              ←
+            </button>
+
+            <div class="tl-dropdown-wrap tl-dropdown">
+              <div class="detail-title" onclick="toggleDropdown()">
+                <span id="detail-time-text" class="detail-time"></span>
+                <span id="detail-title-text">…</span>
+                <span class="dropdown-caret">▾</span>
+              </div>
+              <div class="dropdown-menu" id="dropdown-menu"></div>
+            </div>
+
+            <button
+              class="icon-btn"
+              id="btn-next"
+              onclick="navigateDetail(1)"
+              title="Next"
+            >
+              →
+            </button>
+          </div>
+
+          <!-- Tabs -->
+          <div class="detail-tabs">
+            <div class="detail-tab active" onclick="switchTab('info')">
+              📋 Info
+            </div>
+            <div class="detail-tab" onclick="switchTab('direction')">
+              🗺️ Direction
+            </div>
+            <div class="detail-tab" onclick="switchTab('content')">
+              📱 Content
+            </div>
+          </div>
+
+          <!-- Tab panes -->
+          <div class="tab-pane active" id="tab-info"></div>
+          <div class="tab-pane" id="tab-direction"></div>
+          <div class="tab-pane" id="tab-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SCRIPTS ════════════════════════════════════════ -->
+    <!-- Leaflet JS — loaded synchronously so L is available when app.js runs -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- App logic -->
+    <script src="app.js"></script>
+  </body>
+</html>
