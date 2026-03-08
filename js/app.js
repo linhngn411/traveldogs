@@ -4,7 +4,6 @@
 
 "use strict";
 
-// ─── STATE ───────────────────────────────
 const State = {
   trips: [],
   currentTrip: null,
@@ -13,10 +12,44 @@ const State = {
   map: null,
   mapMarkers: [],
   routeLayer: null,
+
+  // Offline Routing variables
+  pathFinder: null,
+  roadVertices: null,
+  isRoadsLoading: false, // NEW: Prevents duplicate downloads
+
   mobilePanelExpanded: false,
   countdownTimers: [],
 };
 
+// ─── MASSIVE DATA STORAGE (INDEXEDDB) ────────────────
+const DB_NAME = "TravelDogsDB";
+function getDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e) => e.target.result.createObjectStore("cache");
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+async function saveToDB(key, data) {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("cache", "readwrite");
+    tx.objectStore("cache").put(data, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function loadFromDB(key) {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("cache", "readonly");
+    const req = tx.objectStore("cache").get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(tx.error);
+  });
+}
 const setWindowHeight = () => {
   const doc = document.documentElement;
   doc.style.setProperty("--window-height", `${window.innerHeight}px`);
@@ -99,15 +132,101 @@ window.toggleMobilePanel = function () {
 
   setTimeout(() => State.map?.invalidateSize(), 340);
 };
+// ─── LAZY LOAD ROADS DATA ─────────────────
+// ─── LAZY LOAD ROADS DATA ─────────────────
+// ─── LAZY LOAD ROADS DATA ─────────────────
+async function loadRoadsData() {
+  if (State.pathFinder || State.isRoadsLoading) return;
+
+  State.isRoadsLoading = true;
+  document.getElementById("map-loader").classList.add("active");
+
+  try {
+    let roadData = null;
+
+    // 1. Check if we have the 40MB file stored in our heavy-duty IndexedDB
+    const cachedRoads = await loadFromDB("dalatRoadsData");
+
+    if (cachedRoads) {
+      console.log("📦 Loading 40MB road data instantly from IndexedDB...");
+      roadData = cachedRoads; // No JSON.parse needed!
+    } else {
+      console.log(
+        "☁️ Downloading 40MB road data from server (this may take a moment)...",
+      );
+      const roadRes = await fetch("./data/dalat-roads.geojson");
+      if (roadRes.ok) {
+        roadData = await roadRes.json();
+
+        // Save the massive object to the database for all future visits
+        try {
+          await saveToDB("dalatRoadsData", roadData);
+          console.log("💾 Successfully saved 40MB road data to IndexedDB.");
+        } catch (dbErr) {
+          console.warn("⚠️ Failed to save to IndexedDB.", dbErr);
+        }
+      } else {
+        throw new Error("Failed to fetch roads.");
+      }
+    }
+
+    // 2. Build the Routing Engine
+    if (roadData) {
+      const PathFinderModule =
+        await import("https://cdn.skypack.dev/geojson-path-finder");
+      const PathFinder = PathFinderModule.default || PathFinderModule;
+
+      State.pathFinder = new PathFinder(roadData, { precision: 1e-5 });
+
+      const vertices = [];
+      turf.coordEach(roadData, (coord) => {
+        vertices.push(turf.point(coord));
+      });
+      State.roadVertices = turf.featureCollection(vertices);
+      console.log("✅ Offline Routing Engine Ready!");
+
+      // If user is still on the detail page, re-draw map to snap to roads
+      if (document.getElementById("detail-page").classList.contains("active")) {
+        const item =
+          State.currentTrip.days[State.currentDayIdx].items[
+            State.currentItemIdx
+          ];
+        renderDetailMap(item);
+      }
+    }
+  } catch (e) {
+    console.warn("⚠️ Could not load road data.", e);
+  } finally {
+    // ALWAYS REMOVE THE LOADER when finished
+    State.isRoadsLoading = false;
+    document.getElementById("map-loader").classList.remove("active");
+  }
+}
 // ─── LOAD DATA ────────────────────────────
 async function loadData() {
   try {
+    // 1. Load ONLY the trips
     const res = await fetch("./data/trips.json");
     if (!res.ok) throw new Error("Failed to load trips.json");
     const json = await res.json();
     State.trips = json.trips;
 
-    // Replace your URL check inside loadData() with this:
+    State.trips.forEach((trip) => {
+      trip.days.forEach((day) => {
+        day.items.forEach((item) => {
+          if (item.locations) {
+            item.locations.forEach((loc) => {
+              if (loc.coords && typeof loc.coords === "string") {
+                const [lat, lng] = loc.coords.split(",");
+                loc.lat = parseFloat(lat.trim());
+                loc.lng = parseFloat(lng.trim());
+              }
+            });
+          }
+        });
+      });
+    });
+    // 2. Handle URL parameters (Deep linking)
     const params = new URLSearchParams(window.location.search);
     const tripId = params.get("trip");
     const dayId = params.get("day");
@@ -118,7 +237,7 @@ async function loadData() {
       if (trip) {
         State.currentTrip = trip;
         const dIdx = dayId ? trip.days.findIndex((d) => d.id === dayId) : -1;
-        const resolvedDayIdx = dIdx !== -1 ? dIdx : 1; // Fallback to day 1
+        const resolvedDayIdx = dIdx !== -1 ? dIdx : 1;
 
         if (detailId) {
           const iIdx = trip.days[resolvedDayIdx].items.findIndex(
@@ -126,11 +245,9 @@ async function loadData() {
           );
           if (iIdx !== -1) {
             openDetail(resolvedDayIdx, iIdx);
-            return; // Exit early
+            return;
           }
         }
-
-        // If we only have trip/day, just open the timeline page
         openTrip(trip, resolvedDayIdx);
         return;
       }
@@ -362,7 +479,7 @@ function renderTimeline() {
           <h3>${item.task}</h3>
           <span class="type-badge ${meta.badge}">${meta.label}</span>
         </div>
-        <div class="tl-location">📍 ${item.from.name}${item.to ? " → " + item.to.name : ""}</div>
+        <div class="tl-location">📍 ${(item.locations || []).map((l) => l.name).join(" → ")}</div>
         ${item.cost ? `<div class="tl-cost">💰 ${fmt.cost(item.cost.total)}${item.cost.perPerson != null ? " · " + fmt.cost(item.cost.perPerson) + "/người" : ""}</div>` : ""}
         ${item.note ? `<div class="tl-note">${item.note}</div>` : ""}
       </div>`;
@@ -377,13 +494,28 @@ function openDetail(dayIdx, itemIdx) {
   State.currentItemIdx = itemIdx;
   showPage("detail-page");
   setNavBack("Timeline", true);
-  // setDropdownVisible(true);
   buildDropdown();
   renderDetail();
 
+  // CHECK IF WE NEED TO SHOW THE LOADER
+  const item = State.currentTrip.days[dayIdx].items[itemIdx];
+  const prevLoc = getPrevLocation(dayIdx, itemIdx);
+  const pathPoints = [];
+  if (prevLoc) pathPoints.push(prevLoc);
+  if (item.locations) pathPoints.push(...item.locations);
+
+  // If there are multiple points (needs routing) AND the routing engine isn't ready
+  if (pathPoints.length > 1 && !State.pathFinder) {
+    document.getElementById("map-loader").classList.add("active");
+  } else {
+    document.getElementById("map-loader").classList.remove("active");
+  }
+
+  // Trigger lazy load
+  loadRoadsData();
+
   const trip = State.currentTrip;
   const day = trip.days[dayIdx];
-  const item = day.items[itemIdx];
   const url = new URL(window.location);
   url.searchParams.set("trip", trip.id);
   url.searchParams.set("day", day.id);
@@ -432,19 +564,27 @@ function renderDetail() {
 function renderDetailMap(item) {
   const mapEl = document.getElementById("detail-map");
 
+  // 1. Build the path points FIRST so we have coordinates
+  const prevLoc = getPrevLocation(State.currentDayIdx, State.currentItemIdx);
+  const pathPoints = [];
+  if (prevLoc) pathPoints.push(prevLoc);
+  if (item.locations) pathPoints.push(...item.locations);
+
+  if (pathPoints.length === 0) return;
+
+  // 2. Init Map AND set the view immediately to prevent Leaflet "Set center" errors
   if (!State.map) {
     State.map = L.map(mapEl, { zoomControl: true }).setView(
-      [item.from.lat, item.from.lng],
+      [pathPoints[0].lat, pathPoints[0].lng],
       15,
     );
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      attribution: "© OpenStreetMap",
       maxZoom: 19,
     }).addTo(State.map);
   }
 
-  // Clear
+  // Clear previous markers and route
   State.mapMarkers.forEach((m) => m.remove());
   State.mapMarkers = [];
   if (State.routeLayer) {
@@ -460,32 +600,77 @@ function renderDetailMap(item) {
       iconAnchor: [16, 16],
     });
 
-  const mA = L.marker([item.from.lat, item.from.lng], {
-    icon: makeIcon("A", "#3D5229"),
-  })
-    .addTo(State.map)
-    .bindPopup(`<b>${item.from.name}</b><br>${item.timeLabel}`);
-  State.mapMarkers.push(mA);
+  // Draw the custom markers
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  pathPoints.forEach((loc, idx) => {
+    const isImplicitStart = prevLoc && idx === 0;
+    const color = isImplicitStart
+      ? "#7f8c8d"
+      : idx === pathPoints.length - 1
+        ? "#C0392B"
+        : "#3D5229";
+    const label = isImplicitStart ? "📍" : letters[prevLoc ? idx - 1 : idx];
 
-  if (item.to) {
-    const mB = L.marker([item.to.lat, item.to.lng], {
-      icon: makeIcon("B", "#C0392B"),
-    })
+    const m = L.marker([loc.lat, loc.lng], { icon: makeIcon(label, color) })
       .addTo(State.map)
-      .bindPopup(`<b>${item.to.name}</b>`);
-    State.mapMarkers.push(mB);
+      .bindPopup(`<b>${loc.name}</b>`);
+    State.mapMarkers.push(m);
+  });
 
-    State.routeLayer = L.polyline(
-      [
-        [item.from.lat, item.from.lng],
-        [item.to.lat, item.to.lng],
-      ],
-      { color: "#3D5229", weight: 4, opacity: 0.7, dashArray: "8,6" },
-    ).addTo(State.map);
+  // DRAW THE PATH
+  if (pathPoints.length > 1) {
+    let finalPathLatLangs = [];
+
+    for (let i = 0; i < pathPoints.length - 1; i++) {
+      const startLoc = pathPoints[i];
+      const endLoc = pathPoints[i + 1];
+      let routeFound = false;
+
+      if (State.pathFinder && State.roadVertices) {
+        // ADDED SAFETY NET: Wrap the algorithm in try/catch so it can't crash the map
+        try {
+          const startGeoJSON = turf.point([startLoc.lng, startLoc.lat]);
+          const endGeoJSON = turf.point([endLoc.lng, endLoc.lat]);
+
+          const startNode = turf.nearestPoint(startGeoJSON, State.roadVertices);
+          const endNode = turf.nearestPoint(endGeoJSON, State.roadVertices);
+
+          const route = State.pathFinder.findPath(startNode, endNode);
+
+          if (route && route.path) {
+            routeFound = true;
+            const segmentLatLangs = route.path.map((coord) => [
+              coord[1],
+              coord[0],
+            ]);
+            finalPathLatLangs.push(...segmentLatLangs);
+          }
+        } catch (err) {
+          console.warn(
+            "Routing failed for this segment, drawing straight line instead:",
+            err,
+          );
+        }
+      }
+
+      // Fallback to straight line
+      if (!routeFound) {
+        finalPathLatLangs.push(
+          [startLoc.lat, startLoc.lng],
+          [endLoc.lat, endLoc.lng],
+        );
+      }
+    }
+
+    State.routeLayer = L.polyline(finalPathLatLangs, {
+      color: "#3D5229",
+      weight: 5,
+      opacity: 0.8,
+    }).addTo(State.map);
 
     State.map.fitBounds(State.routeLayer.getBounds(), { padding: [40, 40] });
   } else {
-    State.map.setView([item.from.lat, item.from.lng], 16);
+    State.map.setView([pathPoints[0].lat, pathPoints[0].lng], 16);
   }
 
   setTimeout(() => State.map.invalidateSize(), 120);
@@ -506,6 +691,18 @@ function renderInfoTab(item) {
   const el = document.getElementById("tab-info");
   const meta = typeMeta(item.type);
 
+  // Generate HTML for all locations
+  const locationsHtml = (item.locations || [])
+    .map(
+      (loc, i) => `
+    <div class="info-val" style="${i > 0 ? "margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--bamboo-cream);" : ""}">
+      <span class="place-link" onclick="zoomToPlace(${loc.lat},${loc.lng})">🔍 ${loc.name}</span>
+      ${loc.mapUrl ? `<br><a class="ext-link" href="${loc.mapUrl}" target="_blank">🗺️ Mở Google Maps</a>` : ""}
+    </div>
+  `,
+    )
+    .join("");
+
   el.innerHTML = `
     <div class="info-row">
       <div class="info-label">⏰ Thời gian</div>
@@ -515,25 +712,12 @@ function renderInfoTab(item) {
       <div class="info-label">📋 Hoạt động</div>
       <div class="info-val">${item.task}</div>
     </div>
+
     <div class="info-row">
-      <div class="info-label">📍 Địa điểm xuất phát</div>
-      <div class="info-val">
-        <span class="place-link" onclick="zoomToPlace(${item.from.lat},${item.from.lng})">🔍 ${item.from.name}</span>
-        ${item.from.mapUrl ? `<br><a class="ext-link" href="${item.from.mapUrl}" target="_blank">🗺️ Mở Google Maps</a>` : ""}
-      </div>
+      <div class="info-label">📍 Địa điểm (${(item.locations || []).length})</div>
+      ${locationsHtml}
     </div>
-    ${
-      item.to
-        ? `
-    <div class="info-row">
-      <div class="info-label">🏁 Điểm đến</div>
-      <div class="info-val">
-        <span class="place-link" onclick="zoomToPlace(${item.to.lat},${item.to.lng})">🔍 ${item.to.name}</span>
-        ${item.to.mapUrl ? `<br><a class="ext-link" href="${item.to.mapUrl}" target="_blank">🗺️ Mở Google Maps</a>` : ""}
-      </div>
-    </div>`
-        : ""
-    }
+
     <div class="info-row">
       <div class="info-label">🚗 Phương tiện</div>
       <div class="info-val">${item.transport || "–"}</div>
@@ -571,47 +755,73 @@ function renderInfoTab(item) {
 function renderDirectionTab(item) {
   const el = document.getElementById("tab-direction");
 
-  if (!item.to) {
+  const prevLoc = getPrevLocation(State.currentDayIdx, State.currentItemIdx);
+  const pathPoints = [];
+  if (prevLoc) pathPoints.push(prevLoc);
+  if (item.locations) pathPoints.push(...item.locations);
+
+  if (pathPoints.length <= 1) {
     el.innerHTML = `<div style="text-align:center;padding:40px 16px;color:var(--text-light)">
       <div style="font-size:2.8rem;margin-bottom:12px">📍</div>
       <div style="font-weight:800;margin-bottom:6px">Chỉ có 1 địa điểm</div>
-      <div style="font-size:.83rem">Hoạt động này không có điểm đến riêng biệt.</div>
+      <div style="font-size:.83rem">Không cần di chuyển hoặc không có dữ liệu chặng đường.</div>
     </div>`;
     return;
   }
 
-  const dist = calcDist(item.from.lat, item.from.lng, item.to.lat, item.to.lng);
+  // Calculate total distance
+  let totalDist = 0;
+  for (let i = 0; i < pathPoints.length - 1; i++) {
+    totalDist += calcDist(
+      pathPoints[i].lat,
+      pathPoints[i].lng,
+      pathPoints[i + 1].lat,
+      pathPoints[i + 1].lng,
+    );
+  }
   const distText =
-    dist < 1 ? Math.round(dist * 1000) + " m" : dist.toFixed(1) + " km";
-  const mins = Math.round((dist / 30) * 60);
+    totalDist < 1
+      ? Math.round(totalDist * 1000) + " m"
+      : totalDist.toFixed(1) + " km";
+  const mins = Math.round((totalDist / 30) * 60);
+
+  let stepsHtml = "";
+  pathPoints.forEach((loc, i) => {
+    if (i === 0) {
+      stepsHtml += `<div class="dir-step"><div class="dir-icon">🔵</div><div><div class="dir-text">Xuất phát tại <b>${loc.name}</b></div><div class="dir-sub">${prevLoc ? "Từ hoạt động trước" : item.timeLabel}</div></div></div>`;
+    } else {
+      const d = calcDist(
+        pathPoints[i - 1].lat,
+        pathPoints[i - 1].lng,
+        loc.lat,
+        loc.lng,
+      );
+      const dTxt = d < 1 ? Math.round(d * 1000) + " m" : d.toFixed(1) + " km";
+      const isLast = i === pathPoints.length - 1;
+
+      stepsHtml += `<div class="dir-step">
+        <div class="dir-icon">${isLast ? "🔴" : "↗️"}</div>
+        <div><div class="dir-text">${isLast ? "Đến" : "Ghé ngang"} <b>${loc.name}</b></div><div class="dir-sub">Di chuyển ~${dTxt}</div></div>
+      </div>`;
+    }
+  });
 
   el.innerHTML = `
     <div class="dir-header">
       <div style="margin-bottom:6px">
-        <span>📍 ${item.from.name}</span>
+        <span>📍 ${pathPoints[0].name}</span>
         <span style="opacity:.6;margin:0 6px">→</span>
-        <span>🏁 ${item.to.name}</span>
+        <span>🏁 ${pathPoints[pathPoints.length - 1].name}</span>
       </div>
       <div style="display:flex;gap:16px;font-size:.8rem;opacity:.85">
-        <span>📏 ~${distText}</span>
+        <span>📏 Tổng ~${distText}</span>
         <span>⏱️ ~${mins} phút</span>
-        <span>🚗 ${item.transport}</span>
+        <span>🚗 ${item.transport || "Tự túc"}</span>
       </div>
     </div>
-    <div class="dir-step">
-      <div class="dir-icon">🔵</div>
-      <div><div class="dir-text">Xuất phát tại <b>${item.from.name}</b></div><div class="dir-sub">${item.timeLabel}</div></div>
-    </div>
-    <div class="dir-step">
-      <div class="dir-icon">↗️</div>
-      <div><div class="dir-text">Di chuyển theo hướng điểm đến (~${distText})</div><div class="dir-sub">Xem đường trên bản đồ bên trái</div></div>
-    </div>
-    <div class="dir-step">
-      <div class="dir-icon">🔴</div>
-      <div><div class="dir-text">Đến <b>${item.to.name}</b></div><div class="dir-sub">Điểm đến</div></div>
-    </div>
+    ${stepsHtml}
     <div style="margin-top:14px;padding:10px 13px;background:var(--bamboo-cream);border-radius:var(--radius-sm);font-size:.8rem;color:var(--text-mid)">
-      💡 Để có chỉ đường chi tiết, nhấn <b>Mở Google Maps</b> trong tab Info.
+      💡 Để có chỉ đường chính xác, nhấn <b>Mở Google Maps</b> trong tab Info.
     </div>`;
 }
 
@@ -696,6 +906,31 @@ function buildDropdown() {
       menu.appendChild(div);
     });
   });
+}
+function getPrevLocation(dayIdx, itemIdx) {
+  const trip = State.currentTrip;
+  const currentItem = trip.days[dayIdx].items[itemIdx];
+
+  // If explicitly disabled, or it's the very first item of the whole trip
+  if (currentItem.fromLocation === false) return null;
+
+  // Search backwards to find the last valid location
+  let d = dayIdx;
+  let i = itemIdx - 1;
+
+  while (d >= 0) {
+    while (i >= 0) {
+      const prevItem = trip.days[d].items[i];
+      if (prevItem.locations && prevItem.locations.length > 0) {
+        // Return the LAST location in the previous item's array
+        return prevItem.locations[prevItem.locations.length - 1];
+      }
+      i--;
+    }
+    d--;
+    if (d >= 0) i = trip.days[d].items.length - 1;
+  }
+  return null;
 }
 
 window.toggleDropdown = function () {

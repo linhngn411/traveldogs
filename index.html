@@ -65,6 +65,11 @@
         <!-- Map -->
         <div class="map-panel">
           <div id="detail-map"></div>
+
+          <div id="map-loader" class="map-loader">
+            <div class="spinner"></div>
+            <span>Đang tải đường đi...</span>
+          </div>
         </div>
 
         <!-- Info panel -->
@@ -127,6 +132,7 @@
     <!-- ═══ SCRIPTS ════════════════════════════════════════ -->
     <!-- Leaflet JS — loaded synchronously so L is available when app.js runs -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     <!-- App logic -->
     <script src="./js/app.js"></script>
   </body>
