@@ -2,15 +2,16 @@
   "trips": [
     {
       "id": "dalat-2026",
-      "name": "🌿 Đà Lạt Trip",
+      "name": "🌿 Chó đi Đà Lạt",
       "emoji": "🌿",
       "dates": "March 13–15, 2026",
       "persons": 4,
       "departDate": "2026-03-13T00:00:00",
+      "budget": 12000000,
       "days": [
         {
           "id": "day-0",
-          "label": "Day 0 – Travel",
+          "label": "Day 0 – Khởi hành",
           "date": "March 12–13",
           "items": [
             {
@@ -29,8 +30,8 @@
               ],
               "transport": "Xe khách",
               "cost": {
-                "total": 460000,
-                "perPerson": 115000,
+                "total": 3600000,
+                "perPerson": 900000,
                 "note": "Vé xe khách"
               },
               "note": "Đặt vé trước, lên xe đúng giờ.",
@@ -78,11 +79,7 @@
                 }
               ],
               "transport": "Đi bộ",
-              "cost": {
-                "total": 460000,
-                "perPerson": 115000,
-                "note": "Vé xe đêm"
-              },
+              "cost": null,
               "note": "Tập hợp nhóm, tìm Thuận tại bến.",
               "preBook": false,
               "content": []
@@ -827,7 +824,7 @@
         },
         {
           "id": "day-3",
-          "label": "Day 3 – Return",
+          "label": "Day 3 – Kết thúc",
           "date": "March 15",
           "items": [
             {
@@ -980,11 +977,7 @@
                 }
               ],
               "transport": "Xe khách",
-              "cost": {
-                "total": 460000,
-                "perPerson": 115000,
-                "note": "Vé xe khách"
-              },
+              "cost": null,
               "note": "Đặt vé trước. Khoảng 10 tiếng.",
               "preBook": true,
               "content": []
@@ -995,10 +988,11 @@
     },
     {
       "id": "beach-trip",
-      "name": "🏖️ Beach Trip",
+      "name": "🏖️ Chó đi biển",
       "emoji": "🏖️",
       "dates": "TBD",
       "persons": 0,
+      "budget": 0,
       "departDate": null,
       "placeholder": true,
       "days": []

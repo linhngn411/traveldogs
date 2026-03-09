@@ -58,58 +58,79 @@ window.addEventListener("resize", setWindowHeight);
 setWindowHeight();
 
 document.addEventListener("DOMContentLoaded", () => {
-  const handle = document.getElementById("pull-handle");
   const panel = document.getElementById("info-panel");
-  if (!handle || !panel) return;
+  if (!panel) return;
 
   let startY = 0,
     currentY = 0;
   let isDragging = false,
     wasDragged = false;
   let panelHeight = 0;
+  let startScrollTop = 0;
+  let scrollTarget = null;
 
-  handle.addEventListener(
+  // Listen on the entire panel, not just the handle
+  panel.addEventListener(
     "touchstart",
     (e) => {
       if (window.innerWidth > 768) return;
       startY = e.touches[0].clientY;
       currentY = startY;
-      isDragging = true;
-      wasDragged = false; // Reset drag flag
+      isDragging = false;
+      wasDragged = false;
       panelHeight = panel.offsetHeight;
+
+      // Find the element that actually scrolls (the active tab-pane or the panel itself)
+      scrollTarget = e.target.closest(".tab-pane") || panel;
+      startScrollTop = scrollTarget.scrollTop;
+
       panel.style.transition = "none";
     },
     { passive: true },
   );
 
-  handle.addEventListener(
+  panel.addEventListener(
     "touchmove",
     (e) => {
-      if (!isDragging || window.innerWidth > 768) return;
+      if (window.innerWidth > 768) return;
       currentY = e.touches[0].clientY;
       const deltaY = currentY - startY;
 
-      // If finger moves more than 10px, it's a drag, not a tap
-      if (Math.abs(deltaY) > 10) wasDragged = true;
+      // 3 conditions where we want to drag the panel instead of scrolling text:
+      // 1. User is touching the pull-handle directly.
+      // 2. The panel is collapsed and the user is dragging UP.
+      // 3. The panel is expanded, the user is dragging DOWN, and the content is scrolled to the very top.
+      const isHandle = e.target.closest("#pull-handle");
+      const draggingUpWhenCollapsed = !State.mobilePanelExpanded && deltaY < 0;
+      const draggingDownAtTop =
+        State.mobilePanelExpanded && deltaY > 0 && startScrollTop <= 0;
 
-      const baseTranslate = State.mobilePanelExpanded ? 0 : panelHeight - 78;
-      let newTranslate = baseTranslate + deltaY;
-      if (newTranslate < 0) newTranslate = 0;
-      if (newTranslate > panelHeight - 78) newTranslate = panelHeight - 78;
-      panel.style.transform = `translateY(${newTranslate}px)`;
+      if (isHandle || draggingUpWhenCollapsed || draggingDownAtTop) {
+        isDragging = true;
+        if (Math.abs(deltaY) > 10) wasDragged = true;
+
+        // Prevent the browser's native scroll/pull-to-refresh behavior while dragging the panel
+        if (e.cancelable) e.preventDefault();
+
+        const baseTranslate = State.mobilePanelExpanded ? 0 : panelHeight - 78;
+        let newTranslate = baseTranslate + deltaY;
+
+        if (newTranslate < 0) newTranslate = 0;
+        if (newTranslate > panelHeight - 78) newTranslate = panelHeight - 78;
+
+        panel.style.transform = `translateY(${newTranslate}px)`;
+      }
     },
-    { passive: true },
+    { passive: false }, // Must be false to allow e.preventDefault()
   );
 
-  handle.addEventListener("touchend", () => {
-    if (!isDragging || window.innerWidth > 768) return;
-    isDragging = false;
+  panel.addEventListener("touchend", () => {
+    if (window.innerWidth > 768) return;
 
     panel.style.transition = "transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)";
     panel.style.transform = "";
 
-    // Only trigger toggle if it was an actual drag, otherwise let 'onclick' handle it
-    if (wasDragged) {
+    if (isDragging && wasDragged) {
       const deltaY = currentY - startY;
       if (deltaY < -40 && !State.mobilePanelExpanded) {
         window.toggleMobilePanel();
@@ -117,6 +138,8 @@ document.addEventListener("DOMContentLoaded", () => {
         window.toggleMobilePanel();
       }
     }
+
+    isDragging = false;
   });
 });
 // ─── MOBILE PANEL TOGGLE ─────────────────────────
@@ -270,7 +293,7 @@ const fmt = {
 };
 
 const TYPE_META = {
-  travel: { badge: "badge-travel", label: "✈️ Di chuyển", dot: "" },
+  travel: { badge: "badge-travel", label: "🚌 Di chuyển", dot: "" },
   food: { badge: "badge-food", label: "🍜 Ăn uống", dot: "type-food" },
   photo: { badge: "badge-photo", label: "📸 Check-in", dot: "type-photo" },
   hotel: { badge: "badge-hotel", label: "🏨 Khách sạn", dot: "type-hotel" },
@@ -385,7 +408,7 @@ function renderHome() {
         <h2>${trip.name}</h2>
         <div class="card-meta">${trip.dates}${trip.persons ? " · " + trip.persons + " người" : ""}</div>
         ${trip.departDate ? `<div class="countdown-box" id="${cdId}"></div>` : ""}
-        ${total > 0 ? `<div class="card-cost">💰 ~${fmt.cost(Math.round(total / (trip.persons || 1)))} / người</div>` : ""}
+        ${total > 0 ? `<div class="card-cost">💰 ~${fmt.cost(Math.round(trip.budget / (trip.persons || 1)))} / người</div>` : ""}
         <div class="card-status">${trip.placeholder ? "🔒 Chưa lên lịch" : "✅ Đã có lịch"}</div>
       </div>`;
 
@@ -461,7 +484,7 @@ function renderTimeline() {
     const banner = document.createElement("div");
     banner.className = "day-cost-banner fade-up";
     banner.innerHTML = `
-      <div><div class="label">Chi phí ngày này</div><div class="amount">${fmt.cost(dayTotal)}</div></div>
+      <div><div class="label">Tổng thiệt hại</div><div class="amount">${fmt.cost(dayTotal)}</div></div>
       <div style="text-align:right"><div class="label">Mỗi người</div><div class="amount">${fmt.cost(Math.round(dayTotal / State.currentTrip.persons))}</div></div>`;
     wrap.appendChild(banner);
   }

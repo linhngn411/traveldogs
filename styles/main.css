@@ -771,6 +771,7 @@ nav {
   overflow-y: auto;
   padding: 18px;
   display: none;
+  overscroll-behavior-y: contain;
 }
 .tab-pane.active {
   display: block;
