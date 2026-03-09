@@ -74,6 +74,10 @@ document.addEventListener("DOMContentLoaded", () => {
     "touchstart",
     (e) => {
       if (window.innerWidth > 768) return;
+
+      // 🛑 NEW: Ignore touch if it's inside the dropdown menu
+      if (e.target.closest(".tl-dropdown")) return;
+
       startY = e.touches[0].clientY;
       currentY = startY;
       isDragging = false;
@@ -93,6 +97,10 @@ document.addEventListener("DOMContentLoaded", () => {
     "touchmove",
     (e) => {
       if (window.innerWidth > 768) return;
+
+      // 🛑 NEW: Ignore touch if it's inside the dropdown menu
+      if (e.target.closest(".tl-dropdown")) return;
+
       currentY = e.touches[0].clientY;
       const deltaY = currentY - startY;
 
@@ -124,8 +132,11 @@ document.addEventListener("DOMContentLoaded", () => {
     { passive: false }, // Must be false to allow e.preventDefault()
   );
 
-  panel.addEventListener("touchend", () => {
+  panel.addEventListener("touchend", (e) => {
     if (window.innerWidth > 768) return;
+
+    // 🛑 NEW: Ignore touch if it's inside the dropdown menu
+    if (e.target.closest(".tl-dropdown")) return;
 
     panel.style.transition = "transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)";
     panel.style.transform = "";
@@ -839,7 +850,7 @@ function renderDirectionTab(item) {
       <div style="display:flex;gap:16px;font-size:.8rem;opacity:.85">
         <span>📏 Tổng ~${distText}</span>
         <span>⏱️ ~${mins} phút</span>
-        <span>🚗 ${item.transport || "Tự túc"}</span>
+        <span>🏍️ ${item.transport || "Tự túc"}</span>
       </div>
     </div>
     ${stepsHtml}
