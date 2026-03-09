@@ -874,7 +874,7 @@ window.navigateDetail = function (dir) {
 
   State.currentDayIdx = di;
   State.currentItemIdx = ii;
-  renderDetail();
+  openDetail(di, ii);
 };
 
 // ─── DROPDOWN ─────────────────────────────
@@ -900,7 +900,7 @@ function buildDropdown() {
       div.onclick = () => {
         State.currentDayIdx = di;
         State.currentItemIdx = ii;
-        renderDetail();
+        openDetail(di, ii);
         closeDropdown();
       };
       menu.appendChild(div);
