@@ -883,6 +883,7 @@ function buildMediaHtml(url) {
   }
 }
 // ─── CONTENT TAB ─────────────────────────
+// ─── CONTENT TAB ─────────────────────────
 function renderContentTab(item) {
   const el = document.getElementById("tab-content");
 
@@ -896,84 +897,109 @@ function renderContentTab(item) {
     return;
   }
 
-  // 1. CHỈ KHỞI TẠO DOM 1 LẦN DUY NHẤT ĐỂ TRÁNH RELOAD IFRAME
-  let container = document.getElementById("content-flex-container");
+  const mustDoContents = State.contents.filter(
+    (c) => c.must_do && c.must_do.includes(item.id),
+  );
+  const otherContents = State.contents.filter(
+    (c) => !c.must_do || !c.must_do.includes(item.id),
+  );
 
-  if (!container) {
-    el.innerHTML = ""; // Xóa state rỗng
+  // We will store tasks here to fetch thumbnails AFTER the HTML is rendered
+  const oembedTasks = [];
 
-    container = document.createElement("div");
-    container.id = "content-flex-container";
-    container.style.display = "flex";
-    container.style.flexDirection = "column";
-    container.style.gap = "16px";
-    el.appendChild(container);
+  const buildMediaContent = (c) => {
+    if (c.url.includes("tiktok.com")) {
+      const match = c.url.match(/video\/(\d+)/);
+      if (match && match[1]) {
+        const videoId = match[1];
+        const facadeId = "tt-" + Math.random().toString(36).substr(2, 9);
 
-    const headerMustDo = document.createElement("div");
-    headerMustDo.id = "header-must-do";
-    headerMustDo.style.cssText =
-      "order: 0; font-weight: 800; color: #C0392B; text-transform: uppercase; font-size: 0.9rem; margin-bottom: -4px;";
-    headerMustDo.innerHTML = "🔥 Must Do";
-    container.appendChild(headerMustDo);
+        // Push to our fetch queue
+        oembedTasks.push({ id: facadeId, url: c.url });
 
-    const headerAll = document.createElement("div");
-    headerAll.id = "header-all";
-    headerAll.style.cssText =
-      "order: 2; font-weight: 800; color: var(--text-dark); text-transform: uppercase; font-size: 0.9rem; margin-top: 8px; margin-bottom: -4px;";
-    headerAll.innerHTML = "✨ Tất cả nội dung";
-    container.appendChild(headerAll);
-
-    State.contents.forEach((c) => {
-      const div = document.createElement("div");
-
-      if (c.url.includes("tiktok.com")) {
-        const match = c.url.match(/video\/(\d+)/);
-        if (match && match[1]) {
-          div.style.cssText =
-            "border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);";
-          div.innerHTML = `<iframe src="https://www.tiktok.com/embed/v3/${match[1]}" style="width: 100%; height: 580px; border: none; background: #000;" allow="fullscreen"></iframe>`;
-        } else {
-          div.style.cssText =
-            "padding: 12px; background: var(--bamboo-cream); border-radius: 8px;";
-          div.innerHTML = `<a href="${c.url}" target="_blank" class="ext-link">🎵 Xem video TikTok</a>`;
-        }
-      } else {
-        div.style.cssText =
-          "border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);";
-        div.innerHTML = `<img src="${c.url}" style="width: 100%; display: block; object-fit: cover;" alt="Trip Content" loading="lazy" />`;
+        return `
+          <div class="content-item tiktok-container" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 16px; background: #111; height: 580px; position: relative;">
+            <div id="${facadeId}" class="tiktok-facade" onclick="playTikTok(this, '${videoId}')" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: white; background-color: #222; background-size: cover; background-position: center; z-index: 2;">
+              
+              <div style="width: 60px; height: 60px; background: rgba(254, 44, 85, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+                <div style="width: 0; height: 0; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-left: 16px solid white; margin-left: 5px;"></div>
+              </div>
+              <div style="font-weight: 800; font-size: 1rem; text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 0.5px;">Nhấn để xem</div>
+            
+            </div>
+          </div>`;
       }
-
-      c._node = div;
-      container.appendChild(div);
-    });
-  }
-
-  // 2. CHỈ ĐỔI VỊ TRÍ (ORDER) BẰNG CSS
-  let hasMustDo = false;
-  let hasAll = false;
-
-  State.contents.forEach((c) => {
-    if (c.must_do && c.must_do.includes(item.id)) {
-      c._node.style.order = "1";
-      hasMustDo = true;
+      return `
+        <div class="content-item" style="padding: 12px; background: var(--bamboo-cream); border-radius: 8px; margin-bottom: 16px;">
+          <a href="${c.url}" target="_blank" class="ext-link">🎵 Xem video TikTok</a>
+        </div>`;
     } else {
-      c._node.style.order = "3";
-      hasAll = true;
+      return `
+        <div class="content-item" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 16px;">
+          <img src="${c.url}" style="width: 100%; display: block; object-fit: cover;" alt="Trip Content" loading="lazy" />
+        </div>`;
     }
-  });
+  };
 
-  // 3. ẨN/HIỆN TIÊU ĐỀ
-  document.getElementById("header-must-do").style.display = hasMustDo
-    ? "block"
-    : "none";
-  document.getElementById("header-all").style.display = hasAll
-    ? "block"
-    : "none";
-  document.getElementById("header-all").style.marginTop = hasMustDo
-    ? "8px"
-    : "0px";
+  let html = `<div id="content-flex-container" style="display: flex; flex-direction: column; gap: 16px;">`;
+  if (mustDoContents.length > 0) {
+    html += `<div style="font-weight: 800; color: #C0392B; text-transform: uppercase; font-size: 0.9rem; margin-bottom: -4px;">🔥 Must Do</div>`;
+    html += mustDoContents.map(buildMediaContent).join("");
+  }
+  if (otherContents.length > 0) {
+    html += `<div style="font-weight: 800; color: var(--text-dark); text-transform: uppercase; font-size: 0.9rem; margin-top: 8px; margin-bottom: -4px;">✨ Tất cả nội dung</div>`;
+    html += otherContents.map(buildMediaContent).join("");
+  }
+  html += `</div>`;
+  el.innerHTML = html;
+
+  // FETCH THUMBNAILS AFTER DOM IS READY
+  setTimeout(() => {
+    oembedTasks.forEach((task) => {
+      fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(task.url)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          const facadeEl = document.getElementById(task.id);
+          if (facadeEl && data.thumbnail_url) {
+            // Apply image with a dark gradient overlay so the play button stays visible
+            facadeEl.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.6)), url('${data.thumbnail_url}')`;
+          }
+        })
+        .catch((err) =>
+          console.warn("Could not load thumbnail for", task.url, err),
+        );
+    });
+  }, 50);
 }
 
+// Global function to play the video by hiding the thumbnail and injecting the iframe
+window.playTikTok = function (facadeEl, videoId) {
+  const container = facadeEl.parentElement;
+  facadeEl.style.display = "none"; // Hide the thumbnail layer
+
+  let iframe = container.querySelector("iframe");
+  if (!iframe) {
+    // Create the iframe only once
+    iframe = document.createElement("iframe");
+    iframe.src = `https://www.tiktok.com/embed/v3/${videoId}`;
+    iframe.style.cssText =
+      "width: 100%; height: 100%; border: none; z-index: 1;";
+    iframe.allow = "fullscreen";
+    container.appendChild(iframe);
+  } else {
+    // If it already exists, just restore it
+    iframe.src = `https://www.tiktok.com/embed/v3/${videoId}`;
+    iframe.style.display = "block";
+  }
+};
+
+// Global function to swap the placeholder with the actual video
+window.playTikTok = function (facadeEl, videoId) {
+  const container = facadeEl.parentElement;
+  container.innerHTML = `<iframe src="https://www.tiktok.com/embed/v3/${videoId}" style="width: 100%; height: 100%; border: none;" allow="fullscreen"></iframe>`;
+};
+
+// ─── TABS ─────────────────────────────────
 // ─── TABS ─────────────────────────────────
 window.switchTab = function (name) {
   document.querySelectorAll(".detail-tab").forEach((t, i) => {
@@ -987,7 +1013,28 @@ window.switchTab = function (name) {
   const activeTab = document.getElementById("tab-" + name);
   activeTab.classList.add("active");
 
-  // FIX: Reset scroll position right after the tab becomes visible
+  // FIX: Kill background playing TikToks and restore thumbnails when leaving the content tab
+  if (name !== "content") {
+    const contentTab = document.getElementById("tab-content");
+    if (contentTab) {
+      contentTab.querySelectorAll(".tiktok-container").forEach((container) => {
+        const iframe = container.querySelector("iframe");
+        const facade = container.querySelector(".tiktok-facade");
+
+        // Clear the source to instantly kill the video/audio
+        if (iframe) {
+          iframe.src = "";
+          iframe.style.display = "none";
+        }
+        // Show the thumbnail layer again
+        if (facade) {
+          facade.style.display = "flex";
+        }
+      });
+    }
+  }
+
+  // Reset scroll position right after the tab becomes visible
   activeTab.scrollTop = 0;
 
   const infoPanel = document.getElementById("info-panel");
