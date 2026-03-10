@@ -36,7 +36,9 @@
               },
               "note": "Đặt vé trước, lên xe đúng giờ.",
               "preBook": true,
-              "content": []
+              "content": [
+                "https://www.tiktok.com/@phanvan0723/video/7465210533591960839?is_from_webapp=1&sender_device=pc&web_id=7592897495426270751"
+              ]
             },
             {
               "id": "d0_2",
@@ -202,7 +204,9 @@
               },
               "note": "Gửi xe bên Go! Đà Lạt rồi đi bộ. Quanh hồ rất đẹp.",
               "preBook": false,
-              "content": []
+              "content": [
+                "https://www.tiktok.com/@phanvan0723/video/7465210533591960839?is_from_webapp=1&sender_device=pc&web_id=7592897495426270751"
+              ]
             },
             {
               "id": "d1_7",
@@ -322,7 +326,9 @@
               },
               "note": "Gần đó ghé Cơ Sở Đặc Sản Mứt Đà Lạt Mỹ Quyên.",
               "preBook": false,
-              "content": []
+              "content": [
+                "https://www.tiktok.com/@vunehiahiaa/video/7609200088711171336?is_from_webapp=1&sender_device=pc&web_id=7592897495426270751"
+              ]
             },
             {
               "id": "d1_12",
@@ -415,7 +421,9 @@
               },
               "note": "50k/đứa thích gì mua đó. Tìm cầu thang siêu dài bên hông chợ.",
               "preBook": false,
-              "content": []
+              "content": [
+                "https://www.tiktok.com/@dalatsongao/video/7115407985785965850?is_from_webapp=1&sender_device=pc&web_id=7592897495426270751"
+              ]
             },
             {
               "id": "d1_16",
@@ -996,6 +1004,28 @@
       "departDate": null,
       "placeholder": true,
       "days": []
+    }
+  ],
+  "contents": [
+    {
+      "url": "https://www.tiktok.com/@tng_thu/video/7595820200075840789?is_from_webapp=1&sender_device=pc&web_id=7592897495426270751",
+      "must_do": []
+    },
+    {
+      "url": "https://www.tiktok.com/@phanvan0723/video/7465210533591960839?is_from_webapp=1&sender_device=pc&web_id=7592897495426270751",
+      "must_do": ["d0_1", "d1_6"]
+    },
+    {
+      "url": "https://www.tiktok.com/@vunehiahiaa/video/7609200088711171336?is_from_webapp=1&sender_device=pc&web_id=7592897495426270751",
+      "must_do": ["d1_11"]
+    },
+    {
+      "url": "https://www.tiktok.com/@dalatsongao/video/7115407985785965850?is_from_webapp=1&sender_device=pc&web_id=7592897495426270751",
+      "must_do": ["d1_15"]
+    },
+    {
+      "url": "https://www.tiktok.com/@lamtrongnef/video/7612563589001514247?is_from_webapp=1&sender_device=pc&web_id=7592897495426270751",
+      "must_do": ["d2_2", "d3_2"]
     }
   ]
 }

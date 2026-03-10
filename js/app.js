@@ -6,6 +6,7 @@
 
 const State = {
   trips: [],
+  contents: [],
   currentTrip: null,
   currentDayIdx: 0,
   currentItemIdx: 0,
@@ -244,6 +245,7 @@ async function loadData() {
     if (!res.ok) throw new Error("Failed to load trips.json");
     const json = await res.json();
     State.trips = json.trips;
+    State.contents = json.contents || [];
 
     State.trips.forEach((trip) => {
       trip.days.forEach((day) => {
@@ -858,25 +860,118 @@ function renderDirectionTab(item) {
       💡 Để có chỉ đường chính xác, nhấn <b>Mở Google Maps</b> trong tab Info.
     </div>`;
 }
-
+function buildMediaHtml(url) {
+  if (url.includes("tiktok.com")) {
+    const match = url.match(/video\/(\d+)/);
+    if (match && match[1]) {
+      return `
+        <div class="content-item" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 16px;">
+          <iframe src="https://www.tiktok.com/embed/v3/${match[1]}" 
+                  style="width: 100%; height: 580px; border: none; background: #000;" 
+                  allow="fullscreen"></iframe>
+        </div>`;
+    }
+    return `
+      <div class="content-item" style="padding: 12px; background: var(--bamboo-cream); border-radius: 8px; margin-bottom: 16px;">
+        <a href="${url}" target="_blank" class="ext-link">🎵 Xem video TikTok</a>
+      </div>`;
+  } else {
+    return `
+      <div class="content-item" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 16px;">
+        <img src="${url}" style="width: 100%; display: block; object-fit: cover;" alt="Trip Content" loading="lazy" />
+      </div>`;
+  }
+}
 // ─── CONTENT TAB ─────────────────────────
 function renderContentTab(item) {
   const el = document.getElementById("tab-content");
-  const hasContent = item.content && item.content.length > 0;
 
-  el.innerHTML = `
-    <div class="content-drop">
-      <div class="drop-icon">📱</div>
-      <div style="font-weight:800;margin-bottom:6px">Thêm nội dung</div>
-      <p>Upload ảnh, video TikTok hoặc link cho hoạt động này.</p>
-    </div>
-    <div class="content-grid">
-      <div class="content-thumb" title="Thêm ảnh">📷</div>
-      <div class="content-thumb" title="Thêm video">🎬</div>
-      <div class="content-thumb" title="Thêm link">🔗</div>
-      <div class="content-thumb" title="Ghi chú">📝</div>
-    </div>
-    <div style="margin-top:14px;font-size:.78rem;color:var(--text-light);text-align:center">Tính năng upload sắp ra mắt 🚀</div>`;
+  if (!State.contents || State.contents.length === 0) {
+    el.innerHTML = `
+      <div class="content-drop" style="text-align:center; padding: 40px 16px;">
+        <div class="drop-icon" style="font-size:2.8rem; margin-bottom:12px;">📱</div>
+        <div style="font-weight:800; margin-bottom:6px;">Chưa có nội dung</div>
+        <p style="font-size:.85rem; color:var(--text-light);">Chưa có hình ảnh hoặc TikTok nào được thêm vào kho dữ liệu.</p>
+      </div>`;
+    return;
+  }
+
+  // 1. CHỈ KHỞI TẠO DOM 1 LẦN DUY NHẤT ĐỂ TRÁNH RELOAD IFRAME
+  let container = document.getElementById("content-flex-container");
+
+  if (!container) {
+    el.innerHTML = ""; // Xóa state rỗng
+
+    container = document.createElement("div");
+    container.id = "content-flex-container";
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.gap = "16px";
+    el.appendChild(container);
+
+    const headerMustDo = document.createElement("div");
+    headerMustDo.id = "header-must-do";
+    headerMustDo.style.cssText =
+      "order: 0; font-weight: 800; color: #C0392B; text-transform: uppercase; font-size: 0.9rem; margin-bottom: -4px;";
+    headerMustDo.innerHTML = "🔥 Must Do";
+    container.appendChild(headerMustDo);
+
+    const headerAll = document.createElement("div");
+    headerAll.id = "header-all";
+    headerAll.style.cssText =
+      "order: 2; font-weight: 800; color: var(--text-dark); text-transform: uppercase; font-size: 0.9rem; margin-top: 8px; margin-bottom: -4px;";
+    headerAll.innerHTML = "✨ Tất cả nội dung";
+    container.appendChild(headerAll);
+
+    State.contents.forEach((c) => {
+      const div = document.createElement("div");
+
+      if (c.url.includes("tiktok.com")) {
+        const match = c.url.match(/video\/(\d+)/);
+        if (match && match[1]) {
+          div.style.cssText =
+            "border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);";
+          div.innerHTML = `<iframe src="https://www.tiktok.com/embed/v3/${match[1]}" style="width: 100%; height: 580px; border: none; background: #000;" allow="fullscreen"></iframe>`;
+        } else {
+          div.style.cssText =
+            "padding: 12px; background: var(--bamboo-cream); border-radius: 8px;";
+          div.innerHTML = `<a href="${c.url}" target="_blank" class="ext-link">🎵 Xem video TikTok</a>`;
+        }
+      } else {
+        div.style.cssText =
+          "border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);";
+        div.innerHTML = `<img src="${c.url}" style="width: 100%; display: block; object-fit: cover;" alt="Trip Content" loading="lazy" />`;
+      }
+
+      c._node = div;
+      container.appendChild(div);
+    });
+  }
+
+  // 2. CHỈ ĐỔI VỊ TRÍ (ORDER) BẰNG CSS
+  let hasMustDo = false;
+  let hasAll = false;
+
+  State.contents.forEach((c) => {
+    if (c.must_do && c.must_do.includes(item.id)) {
+      c._node.style.order = "1";
+      hasMustDo = true;
+    } else {
+      c._node.style.order = "3";
+      hasAll = true;
+    }
+  });
+
+  // 3. ẨN/HIỆN TIÊU ĐỀ
+  document.getElementById("header-must-do").style.display = hasMustDo
+    ? "block"
+    : "none";
+  document.getElementById("header-all").style.display = hasAll
+    ? "block"
+    : "none";
+  document.getElementById("header-all").style.marginTop = hasMustDo
+    ? "8px"
+    : "0px";
 }
 
 // ─── TABS ─────────────────────────────────
@@ -884,10 +979,21 @@ window.switchTab = function (name) {
   document.querySelectorAll(".detail-tab").forEach((t, i) => {
     t.classList.toggle("active", ["info", "direction", "content"][i] === name);
   });
-  document
-    .querySelectorAll(".tab-pane")
-    .forEach((p) => p.classList.remove("active"));
-  document.getElementById("tab-" + name).classList.add("active");
+
+  document.querySelectorAll(".tab-pane").forEach((p) => {
+    p.classList.remove("active");
+  });
+
+  const activeTab = document.getElementById("tab-" + name);
+  activeTab.classList.add("active");
+
+  // FIX: Reset scroll position right after the tab becomes visible
+  activeTab.scrollTop = 0;
+
+  const infoPanel = document.getElementById("info-panel");
+  if (infoPanel) {
+    infoPanel.scrollTop = 0;
+  }
 };
 
 // ─── NAVIGATION ───────────────────────────
