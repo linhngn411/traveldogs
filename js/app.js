@@ -641,7 +641,15 @@ function renderTimeline() {
           <h3>${item.task}</h3>
           <span class="type-badge ${meta.badge}">${meta.label}</span>
         </div>
-        <div class="tl-location">📍 ${(item.locations || []).map((l) => l.name).join(" → ")}</div>
+        <div class="tl-location">
+          📍 ${(item.locations || []).map((l) => {
+            const mapHref = l.mapUrl || (l.coords ? `https://maps.google.com/?q=${l.coords}` : "");
+            if (mapHref) {
+              return `<a href="${mapHref}" target="_blank" class="loc-map-link" onclick="event.stopPropagation()">${l.name} <i class="fa-solid fa-map-location-dot"></i></a>`;
+            }
+            return `<span>${l.name}</span>`;
+          }).join(' <span style="opacity:0.5; margin:0 4px;">→</span> ')}
+        </div>
         ${item.cost ? `<div class="tl-cost">💰 ${fmt.cost(item.cost.total)}${item.cost.perPerson != null ? " · " + fmt.cost(item.cost.perPerson) + "/người" : ""}</div>` : ""}
         ${item.note ? `<div class="tl-note">${item.note}</div>` : ""}
       </div>`;

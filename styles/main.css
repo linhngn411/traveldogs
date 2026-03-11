@@ -562,6 +562,26 @@ nav {
   font-size: 0.8rem;
   color: var(--text-light);
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.loc-map-link {
+  color: var(--bamboo-dark);
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--bamboo-pale);
+  font-weight: 700;
+  transition: all 0.2s;
+  padding-bottom: 1px;
+}
+.loc-map-link:hover {
+  color: var(--bamboo-darkest);
+  border-bottom-color: var(--bamboo-darkest);
+}
+.loc-map-link i {
+  font-size: 0.72rem;
+  margin-left: 3px;
+  color: #ea4335; /* subtle Google map red accent */
 }
 .tl-cost {
   font-size: 0.78rem;
