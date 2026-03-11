@@ -8,6 +8,7 @@
       "persons": 4,
       "departDate": "2026-03-13T00:00:00",
       "budget": 12000000,
+      "sheetUrl": "https://docs.google.com/spreadsheets/d/1_hQnOCyXVlVwNM2M8oV2EjzXFWah_Ba-tUdCj0caJ_M/edit?usp=sharing",
       "days": [
         {
           "id": "day-0",
