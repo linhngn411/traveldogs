@@ -21,6 +21,7 @@ const State = {
 
   mobilePanelExpanded: false,
   countdownTimers: [],
+  weatherData: null,
 };
 
 // ─── MASSIVE DATA STORAGE (INDEXEDDB) ────────────────
@@ -301,6 +302,87 @@ async function loadData() {
 }
 
 // ─── HELPERS ──────────────────────────────
+const WMO_ICONS = {
+  0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 
+  45: "🌫️", 48: "🌫️", 51: "🌧️", 53: "🌧️", 55: "🌧️", 
+  56: "🌧️", 57: "🌧️", 61: "☔", 63: "☔", 65: "☔", 
+  66: "☔", 67: "☔", 71: "🌨️", 73: "🌨️", 75: "🌨️", 
+  77: "🌨️", 80: "🌦️", 81: "🌦️", 82: "🌦️", 85: "🌨️", 
+  86: "🌨️", 95: "⛈️", 96: "⛈️", 99: "⛈️"
+};
+
+function getDayISODate(dateStr, year) {
+   if(!dateStr) return null;
+   const match = dateStr.match(/([a-zA-Z]+)\s+(\d+)(?:\s*(?:–|—|-)\s*(\d+))?/);
+   if(match) {
+      const monthStr = match[1];
+      const dayNum = match[2]; // always take the first day in case of range M-N
+      const d = new Date(`${monthStr} ${dayNum}, ${year}`);
+      if(d && !isNaN(d.getTime())) {
+         const tzOffset = d.getTimezoneOffset() * 60000;
+         return new Date(d.getTime() - tzOffset).toISOString().split("T")[0];
+      }
+   }
+   return null;
+}
+
+async function fetchWeatherForTrip(trip) {
+  if (State.weatherData && State.weatherData.tripId === trip.id) return;
+  State.weatherData = null;
+
+  let lat = null, lng = null;
+  
+  // Find the trip's main destination by looking for the first hotel, 
+  // since the very first location in the timeline might be the departure point (e.g. Can Tho).
+  for(let day of trip.days) {
+     for(let item of day.items) {
+        if(item.type === "hotel" && item.locations && item.locations.length > 0) {
+           lat = item.locations[0].lat;
+           lng = item.locations[0].lng;
+           break;
+        }
+     }
+     if(lat) break;
+  }
+  
+  // Fallback if no hotel is found
+  if(!lat) {
+     for(let day of trip.days) {
+        for(let item of day.items) {
+           if(item.locations && item.locations.length > 0) {
+              lat = item.locations[0].lat;
+              lng = item.locations[0].lng;
+              break;
+           }
+        }
+        if(lat) break;
+     }
+  }
+
+  if(!lat) return;
+
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,weather_code,precipitation_probability&timezone=Asia%2FBangkok&forecast_days=16`);
+    const data = await res.json();
+    if(data && data.hourly) {
+      const forecast = {};
+      data.hourly.time.forEach((t, i) => {
+        forecast[t] = {
+           temp: Math.round(data.hourly.temperature_2m[i]),
+           code: data.hourly.weather_code[i],
+           precip: data.hourly.precipitation_probability[i] || 0
+        }
+      });
+      State.weatherData = { tripId: trip.id, forecast };
+      if (document.getElementById("timeline-page").classList.contains("active")) {
+          renderTimeline();
+      }
+    }
+  } catch(e) {
+    console.warn("Could not fetch weather", e);
+  }
+}
+
 const fmt = {
   cost: (n) => (n != null ? n.toLocaleString("vi-VN") + " đ" : "–"),
 };
@@ -447,11 +529,25 @@ function openTrip(trip, startDayIdx = null) {
   State.currentItemIdx = 0;
 
   document.getElementById("tl-trip-name").textContent = trip.name;
+  
+  const totalCost = calcTripCost(trip);
+  const costStr = totalCost > 0 ? ` · 💸 Tổng: ${fmt.cost(totalCost)}` : "";
   document.getElementById("tl-trip-dates").textContent =
-    trip.dates + " · " + trip.persons + " người";
+    trip.dates + " · " + trip.persons + " người" + costStr;
+
+  const sheetLink = document.getElementById("tl-sheet-link");
+  if (trip.sheetUrl) {
+    sheetLink.href = trip.sheetUrl;
+    sheetLink.style.display = "inline-block";
+  } else {
+    sheetLink.style.display = "none";
+  }
 
   showPage("timeline-page");
   setNavBack("Trang chủ", true);
+
+  fetchWeatherForTrip(trip);
+
   renderDayTabs();
   renderTimeline();
 
@@ -466,10 +562,12 @@ function openTrip(trip, startDayIdx = null) {
 function renderDayTabs() {
   const wrap = document.getElementById("day-tabs");
   wrap.innerHTML = "";
+  
   State.currentTrip.days.forEach((day, i) => {
     const btn = document.createElement("div");
     btn.className = "day-tab" + (i === State.currentDayIdx ? " active" : "");
     btn.textContent = day.label;
+
     // Inside renderDayTabs(), update the btn.onclick block:
     btn.onclick = () => {
       State.currentDayIdx = i;
@@ -502,20 +600,56 @@ function renderTimeline() {
     wrap.appendChild(banner);
   }
 
+  const tripYear = State.currentTrip.departDate ? new Date(State.currentTrip.departDate).getFullYear() : new Date().getFullYear();
+  const isoDay = getDayISODate(day.date, tripYear);
+
   day.items.forEach((item, idx) => {
     const meta = typeMeta(item.type);
+    
+    let wHtml = "";
+    if (State.weatherData && State.weatherData.forecast && isoDay && item.time) {
+      let currentIso = isoDay;
+      if (item.timeLabel && item.timeLabel.includes("+1")) {
+         const d = new Date(isoDay);
+         d.setDate(d.getDate() + 1);
+         currentIso = d.toISOString().split("T")[0];
+      }
+      const hourStr = item.time.split(":")[0];
+      const timeKey = `${currentIso}T${hourStr}:00`;
+      const w = State.weatherData.forecast[timeKey];
+      if (w) {
+         const icon = WMO_ICONS[w.code] || "☁️";
+         let precipHtml = "";
+         if (w.precip > 25) {
+             precipHtml = `<div style="color:#3498db;margin-top:2px;font-weight:800;">💧${w.precip}%</div>`;
+         }
+         wHtml = `<div class="tl-weather">${icon} ${w.temp}°C${precipHtml}</div>`;
+      }
+    }
+
     const el = document.createElement("div");
     el.className = "tl-item fade-up";
     el.style.animationDelay = idx * 0.04 + "s";
     el.innerHTML = `
-      <div class="tl-time">${item.timeLabel}</div>
+      <div class="tl-time">
+        <div>${item.timeLabel}</div>
+        ${wHtml}
+      </div>
       <div class="tl-dot-wrap"><div class="tl-dot ${meta.dot}"></div></div>
       <div class="tl-card">
         <div class="tl-card-top">
           <h3>${item.task}</h3>
           <span class="type-badge ${meta.badge}">${meta.label}</span>
         </div>
-        <div class="tl-location">📍 ${(item.locations || []).map((l) => l.name).join(" → ")}</div>
+        <div class="tl-location">
+          📍 ${(item.locations || []).map((l) => {
+            const mapHref = l.mapUrl || (l.coords ? `https://maps.google.com/?q=${l.coords}` : "");
+            if (mapHref) {
+              return `<a href="${mapHref}" target="_blank" class="loc-map-link" onclick="event.stopPropagation()">${l.name} <i class="fa-solid fa-map-location-dot"></i></a>`;
+            }
+            return `<span>${l.name}</span>`;
+          }).join(' <span style="opacity:0.5; margin:0 4px;">→</span> ')}
+        </div>
         ${item.cost ? `<div class="tl-cost">💰 ${fmt.cost(item.cost.total)}${item.cost.perPerson != null ? " · " + fmt.cost(item.cost.perPerson) + "/người" : ""}</div>` : ""}
         ${item.note ? `<div class="tl-note">${item.note}</div>` : ""}
       </div>`;

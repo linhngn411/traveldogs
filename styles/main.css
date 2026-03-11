@@ -321,6 +321,25 @@ nav {
 .timeline-header p {
   color: var(--bamboo-pale);
   font-size: 0.88rem;
+  margin-bottom: 12px;
+}
+.sheet-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s;
+}
+.sheet-link:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
 }
 .day-tabs {
   display: flex;
@@ -345,11 +364,28 @@ nav {
   background: white;
   color: var(--text-mid);
   border: 1.5px solid var(--bamboo-pale);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .day-tab.active {
   background: var(--bamboo-dark);
   color: white;
   border-color: var(--bamboo-dark);
+}
+.weather-badge {
+  display: inline-flex;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  align-items: center;
+  gap: 3px;
+  color: var(--text-mid);
+}
+.day-tab.active .weather-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
 }
 .timeline-wrap {
   max-width: 680px;
@@ -385,7 +421,7 @@ nav {
 .tl-item::before {
   content: "";
   position: absolute;
-  left: 64px;
+  left: 92.5px;
   top: 46px;
   bottom: -6px;
   width: 2px;
@@ -396,13 +432,20 @@ nav {
   display: none;
 }
 .tl-time {
-  min-width: 52px;
+  width: 70px;
+  flex-shrink: 0;
   text-align: right;
   padding-top: 13px;
   font-size: 0.76rem;
   font-weight: 800;
   color: var(--bamboo-mid);
   line-height: 1.3;
+}
+.tl-weather {
+  font-size: 0.65rem;
+  color: var(--text-light);
+  margin-top: 4px;
+  font-weight: 700;
 }
 .tl-dot-wrap {
   display: flex;
@@ -519,6 +562,26 @@ nav {
   font-size: 0.8rem;
   color: var(--text-light);
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.loc-map-link {
+  color: var(--bamboo-dark);
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--bamboo-pale);
+  font-weight: 700;
+  transition: all 0.2s;
+  padding-bottom: 1px;
+}
+.loc-map-link:hover {
+  color: var(--bamboo-darkest);
+  border-bottom-color: var(--bamboo-darkest);
+}
+.loc-map-link i {
+  font-size: 0.72rem;
+  margin-left: 3px;
+  color: #ea4335; /* subtle Google map red accent */
 }
 .tl-cost {
   font-size: 0.78rem;
