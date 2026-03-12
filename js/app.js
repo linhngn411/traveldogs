@@ -303,82 +303,113 @@ async function loadData() {
 
 // ─── HELPERS ──────────────────────────────
 const WMO_ICONS = {
-  0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 
-  45: "🌫️", 48: "🌫️", 51: "🌧️", 53: "🌧️", 55: "🌧️", 
-  56: "🌧️", 57: "🌧️", 61: "☔", 63: "☔", 65: "☔", 
-  66: "☔", 67: "☔", 71: "🌨️", 73: "🌨️", 75: "🌨️", 
-  77: "🌨️", 80: "🌦️", 81: "🌦️", 82: "🌦️", 85: "🌨️", 
-  86: "🌨️", 95: "⛈️", 96: "⛈️", 99: "⛈️"
+  0: "☀️",
+  1: "🌤️",
+  2: "⛅",
+  3: "☁️",
+  45: "🌫️",
+  48: "🌫️",
+  51: "🌧️",
+  53: "🌧️",
+  55: "🌧️",
+  56: "🌧️",
+  57: "🌧️",
+  61: "☔",
+  63: "☔",
+  65: "☔",
+  66: "☔",
+  67: "☔",
+  71: "🌨️",
+  73: "🌨️",
+  75: "🌨️",
+  77: "🌨️",
+  80: "🌦️",
+  81: "🌦️",
+  82: "🌦️",
+  85: "🌨️",
+  86: "🌨️",
+  95: "⛈️",
+  96: "⛈️",
+  99: "⛈️",
 };
 
 function getDayISODate(dateStr, year) {
-   if(!dateStr) return null;
-   const match = dateStr.match(/([a-zA-Z]+)\s+(\d+)(?:\s*(?:–|—|-)\s*(\d+))?/);
-   if(match) {
-      const monthStr = match[1];
-      const dayNum = match[2]; // always take the first day in case of range M-N
-      const d = new Date(`${monthStr} ${dayNum}, ${year}`);
-      if(d && !isNaN(d.getTime())) {
-         const tzOffset = d.getTimezoneOffset() * 60000;
-         return new Date(d.getTime() - tzOffset).toISOString().split("T")[0];
-      }
-   }
-   return null;
+  if (!dateStr) return null;
+  const match = dateStr.match(/([a-zA-Z]+)\s+(\d+)(?:\s*(?:–|—|-)\s*(\d+))?/);
+  if (match) {
+    const monthStr = match[1];
+    const dayNum = match[2]; // always take the first day in case of range M-N
+    const d = new Date(`${monthStr} ${dayNum}, ${year}`);
+    if (d && !isNaN(d.getTime())) {
+      const tzOffset = d.getTimezoneOffset() * 60000;
+      return new Date(d.getTime() - tzOffset).toISOString().split("T")[0];
+    }
+  }
+  return null;
 }
 
 async function fetchWeatherForTrip(trip) {
   if (State.weatherData && State.weatherData.tripId === trip.id) return;
   State.weatherData = null;
 
-  let lat = null, lng = null;
-  
-  // Find the trip's main destination by looking for the first hotel, 
+  let lat = null,
+    lng = null;
+
+  // Find the trip's main destination by looking for the first hotel,
   // since the very first location in the timeline might be the departure point (e.g. Can Tho).
-  for(let day of trip.days) {
-     for(let item of day.items) {
-        if(item.type === "hotel" && item.locations && item.locations.length > 0) {
-           lat = item.locations[0].lat;
-           lng = item.locations[0].lng;
-           break;
-        }
-     }
-     if(lat) break;
-  }
-  
-  // Fallback if no hotel is found
-  if(!lat) {
-     for(let day of trip.days) {
-        for(let item of day.items) {
-           if(item.locations && item.locations.length > 0) {
-              lat = item.locations[0].lat;
-              lng = item.locations[0].lng;
-              break;
-           }
-        }
-        if(lat) break;
-     }
+  for (let day of trip.days) {
+    for (let item of day.items) {
+      if (
+        item.type === "hotel" &&
+        item.locations &&
+        item.locations.length > 0
+      ) {
+        lat = item.locations[0].lat;
+        lng = item.locations[0].lng;
+        break;
+      }
+    }
+    if (lat) break;
   }
 
-  if(!lat) return;
+  // Fallback if no hotel is found
+  if (!lat) {
+    for (let day of trip.days) {
+      for (let item of day.items) {
+        if (item.locations && item.locations.length > 0) {
+          lat = item.locations[0].lat;
+          lng = item.locations[0].lng;
+          break;
+        }
+      }
+      if (lat) break;
+    }
+  }
+
+  if (!lat) return;
 
   try {
-    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,weather_code,precipitation_probability&timezone=Asia%2FBangkok&forecast_days=16`);
+    const res = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,weather_code,precipitation_probability&timezone=Asia%2FBangkok&forecast_days=16`,
+    );
     const data = await res.json();
-    if(data && data.hourly) {
+    if (data && data.hourly) {
       const forecast = {};
       data.hourly.time.forEach((t, i) => {
         forecast[t] = {
-           temp: Math.round(data.hourly.temperature_2m[i]),
-           code: data.hourly.weather_code[i],
-           precip: data.hourly.precipitation_probability[i] || 0
-        }
+          temp: Math.round(data.hourly.temperature_2m[i]),
+          code: data.hourly.weather_code[i],
+          precip: data.hourly.precipitation_probability[i] || 0,
+        };
       });
       State.weatherData = { tripId: trip.id, forecast };
-      if (document.getElementById("timeline-page").classList.contains("active")) {
-          renderTimeline();
+      if (
+        document.getElementById("timeline-page").classList.contains("active")
+      ) {
+        renderTimeline();
       }
     }
-  } catch(e) {
+  } catch (e) {
     console.warn("Could not fetch weather", e);
   }
 }
@@ -529,7 +560,7 @@ function openTrip(trip, startDayIdx = null) {
   State.currentItemIdx = 0;
 
   document.getElementById("tl-trip-name").textContent = trip.name;
-  
+
   const totalCost = calcTripCost(trip);
   const costStr = totalCost > 0 ? ` · 💸 Tổng: ${fmt.cost(totalCost)}` : "";
   document.getElementById("tl-trip-dates").textContent =
@@ -562,7 +593,7 @@ function openTrip(trip, startDayIdx = null) {
 function renderDayTabs() {
   const wrap = document.getElementById("day-tabs");
   wrap.innerHTML = "";
-  
+
   State.currentTrip.days.forEach((day, i) => {
     const btn = document.createElement("div");
     btn.className = "day-tab" + (i === State.currentDayIdx ? " active" : "");
@@ -600,30 +631,37 @@ function renderTimeline() {
     wrap.appendChild(banner);
   }
 
-  const tripYear = State.currentTrip.departDate ? new Date(State.currentTrip.departDate).getFullYear() : new Date().getFullYear();
+  const tripYear = State.currentTrip.departDate
+    ? new Date(State.currentTrip.departDate).getFullYear()
+    : new Date().getFullYear();
   const isoDay = getDayISODate(day.date, tripYear);
 
   day.items.forEach((item, idx) => {
     const meta = typeMeta(item.type);
-    
+
     let wHtml = "";
-    if (State.weatherData && State.weatherData.forecast && isoDay && item.time) {
+    if (
+      State.weatherData &&
+      State.weatherData.forecast &&
+      isoDay &&
+      item.time
+    ) {
       let currentIso = isoDay;
       if (item.timeLabel && item.timeLabel.includes("+1")) {
-         const d = new Date(isoDay);
-         d.setDate(d.getDate() + 1);
-         currentIso = d.toISOString().split("T")[0];
+        const d = new Date(isoDay);
+        d.setDate(d.getDate() + 1);
+        currentIso = d.toISOString().split("T")[0];
       }
       const hourStr = item.time.split(":")[0];
       const timeKey = `${currentIso}T${hourStr}:00`;
       const w = State.weatherData.forecast[timeKey];
       if (w) {
-         const icon = WMO_ICONS[w.code] || "☁️";
-         let precipHtml = "";
-         if (w.precip > 25) {
-             precipHtml = `<div style="color:#3498db;margin-top:2px;font-weight:800;">💧${w.precip}%</div>`;
-         }
-         wHtml = `<div class="tl-weather">${icon} ${w.temp}°C${precipHtml}</div>`;
+        const icon = WMO_ICONS[w.code] || "☁️";
+        let precipHtml = "";
+        if (w.precip > 25) {
+          precipHtml = `<div style="color:#3498db;margin-top:2px;font-weight:800;">💧${w.precip}%</div>`;
+        }
+        wHtml = `<div class="tl-weather">${icon} ${w.temp}°C${precipHtml}</div>`;
       }
     }
 
@@ -642,13 +680,17 @@ function renderTimeline() {
           <span class="type-badge ${meta.badge}">${meta.label}</span>
         </div>
         <div class="tl-location">
-          📍 ${(item.locations || []).map((l) => {
-            const mapHref = l.mapUrl || (l.coords ? `https://maps.google.com/?q=${l.coords}` : "");
-            if (mapHref) {
-              return `<a href="${mapHref}" target="_blank" class="loc-map-link" onclick="event.stopPropagation()">${l.name} <i class="fa-solid fa-map-location-dot"></i></a>`;
-            }
-            return `<span>${l.name}</span>`;
-          }).join(' <span style="opacity:0.5; margin:0 4px;">→</span> ')}
+          📍 ${(item.locations || [])
+            .map((l) => {
+              const mapHref =
+                l.mapUrl ||
+                (l.coords ? `https://maps.google.com/?q=${l.coords}` : "");
+              if (mapHref) {
+                return `<a href="${mapHref}" target="_blank" class="loc-map-link" onclick="event.stopPropagation()">${l.name} <i class="fa-solid fa-map-location-dot"></i></a>`;
+              }
+              return `<span>${l.name}</span>`;
+            })
+            .join(' <span style="opacity:0.5; margin:0 4px;">→</span> ')}
         </div>
         ${item.cost ? `<div class="tl-cost">💰 ${fmt.cost(item.cost.total)}${item.cost.perPerson != null ? " · " + fmt.cost(item.cost.perPerson) + "/người" : ""}</div>` : ""}
         ${item.note ? `<div class="tl-note">${item.note}</div>` : ""}
@@ -719,6 +761,7 @@ function renderDetail() {
   renderInfoTab(item);
   renderDirectionTab(item);
   renderContentTab(item);
+  renderExpenseTab(item);
 
   // Sync dropdown active state
   document.querySelectorAll(".dropdown-item").forEach((el) => {
@@ -1137,7 +1180,10 @@ window.playTikTok = function (facadeEl, videoId) {
 // ─── TABS ─────────────────────────────────
 window.switchTab = function (name) {
   document.querySelectorAll(".detail-tab").forEach((t, i) => {
-    t.classList.toggle("active", ["info", "direction", "content"][i] === name);
+    t.classList.toggle(
+      "active",
+      ["info", "direction", "content", "expense"][i] === name,
+    );
   });
 
   document.querySelectorAll(".tab-pane").forEach((p) => {
@@ -1326,6 +1372,117 @@ function waitForLeaflet(cb, retries = 20) {
   }
 }
 
+// ─── EXPENSE TAB ─────────────────────────
+const GAS_WEB_APP_URL =
+  "https://script.google.com/macros/s/AKfycbyv1AaL-9FmbPDTEzVk9HFaaM3bgO7DczO6bDoU2oK6A2dkZ0Haecbr5Zy19KRPL5E/exec";
+
+function renderExpenseTab(item) {
+  const el = document.getElementById("tab-expense");
+
+  // Giao diện form giống ảnh mẫu
+  el.innerHTML = `
+    <form id="expenseForm" class="expense-form">
+      <div class="form-group">
+        <label class="form-label">Event</label>
+        <input type="text" id="expEvent" class="form-input" value="${item.task}" required placeholder="Văn bản câu trả lời ngắn" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Hình thức thanh toán</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="payMethod" value="Tiền mặt" required> Tiền mặt
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="payMethod" value="Chuyển khoản"> Chuyển khoản
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Số tiền</label>
+        <input type="text" id="expAmount" class="form-input" required placeholder="Văn bản câu trả lời ngắn" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Minh chứng</label>
+        <div class="file-upload-wrap">
+          <input type="file" id="expFile" accept="image/*,.pdf" style="font-size: 0.8rem; max-width: 100%;" required />
+        </div>
+        <div style="font-size: 0.7rem; color: var(--text-light); margin-top: 4px;">Kích thước tệp tối đa 10 MB</div>
+      </div>
+
+      <button type="submit" id="expSubmitBtn" class="submit-btn">Gửi</button>
+      <div id="expStatus" class="status-msg"></div>
+    </form>
+  `;
+
+  // Xử lý gửi form
+  document
+    .getElementById("expenseForm")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById("expSubmitBtn");
+      const statusMsg = document.getElementById("expStatus");
+      const fileInput = document.getElementById("expFile");
+      const file = fileInput.files[0];
+
+      // Kiểm tra dung lượng tệp
+      if (file && file.size > 10 * 1024 * 1024) {
+        statusMsg.innerText = "Tệp vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn.";
+        statusMsg.style.color = "var(--accent-red)";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Đang gửi...";
+      statusMsg.innerText = "";
+
+      const payload = {
+        event: document.getElementById("expEvent").value,
+        method: document.querySelector('input[name="payMethod"]:checked').value,
+        amount: document.getElementById("expAmount").value,
+        fileName: file ? file.name : "",
+        mimeType: file ? file.type : "",
+        base64: "",
+      };
+
+      // Chuyển file sang Base64
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        payload.base64 = event.target.result.split(",")[1];
+
+        // Gửi fetch API
+        fetch(GAS_WEB_APP_URL, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.status === "success") {
+              statusMsg.innerText = "🎉 Đã ghi nhận chi tiêu thành công!";
+              statusMsg.style.color = "var(--bamboo-mid)";
+              document.getElementById("expenseForm").reset();
+            } else {
+              statusMsg.innerText = "❌ Lỗi server: " + data.message;
+              statusMsg.style.color = "var(--accent-red)";
+            }
+          })
+          .catch((err) => {
+            statusMsg.innerText = "❌ Lỗi kết nối mạng.";
+            statusMsg.style.color = "var(--accent-red)";
+          })
+          .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Gửi";
+          });
+      };
+
+      reader.readAsDataURL(file);
+    });
+}
 document.addEventListener("DOMContentLoaded", () => {
   waitForLeaflet(loadData);
 });
