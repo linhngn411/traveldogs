@@ -758,8 +758,9 @@ nav {
 .map-loader {
   position: absolute;
   inset: 0;
-  background: rgba(248, 250, 240, 0.7); /* Semi-transparent bamboo white */
-  backdrop-filter: blur(3px);
+  /* Reduced opacity & blur so the straight-line fallback is visible underneath */
+  background: rgba(248, 250, 240, 0.4);
+  backdrop-filter: blur(2px);
   z-index: 9999; /* Sit on top of the map */
   display: none; /* Hidden by default */
   flex-direction: column;
@@ -891,6 +892,9 @@ nav {
   flex-direction: column;
   background: white;
   border-left: 1px solid var(--bamboo-pale);
+
+  position: relative;
+  z-index: 10000;
 }
 .detail-tabs {
   display: flex;
@@ -1099,6 +1103,30 @@ nav {
 .fade-up {
   animation: fadeUp 0.38s ease both;
 }
+/* ======= EXPENSE QUICK BUTTON (TIMELINE) ======= */
+.expense-nav-btn {
+  background: var(--bamboo-cream);
+  color: var(--bamboo-dark);
+  border: 1.5px solid var(--bamboo-pale);
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.expense-nav-btn:hover {
+  background: var(--bamboo-pale);
+  color: var(--bamboo-darkest);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(45, 58, 30, 0.15);
+}
 
 /* ======= MOBILE ======= */
 @media (max-width: 768px) {
@@ -1120,7 +1148,7 @@ nav {
     border-left: none;
     border-top: 2px solid var(--bamboo-pale);
     border-radius: var(--radius) var(--radius) 0 0;
-    z-index: 10;
+    z-index: 10000;
     box-shadow: 0 -4px 24px rgba(45, 58, 30, 0.15);
     transform: translateY(calc(100% - 78px));
     transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);

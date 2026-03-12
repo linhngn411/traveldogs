@@ -13,15 +13,19 @@ const State = {
   map: null,
   mapMarkers: [],
   routeLayer: null,
+  mapRenderId: 0,
 
-  // Offline Routing variables
-  pathFinder: null,
-  roadVertices: null,
-  isRoadsLoading: false, // NEW: Prevents duplicate downloads
-
+  // UI tracking
   mobilePanelExpanded: false,
   countdownTimers: [],
   weatherData: null,
+  expenseInfo: { balance: null, totalSpent: null, isLoading: false },
+
+  // Worker tracking
+  routingWorker: null,
+  isRoutingReady: false,
+  routeCallbacks: new Map(), // Stores promises waiting for routes
+  routeRequestId: 0,
 };
 
 // ─── MASSIVE DATA STORAGE (INDEXEDDB) ────────────────
@@ -168,60 +172,24 @@ window.toggleMobilePanel = function () {
 
   setTimeout(() => State.map?.invalidateSize(), 340);
 };
-// ─── LAZY LOAD ROADS DATA ─────────────────
-// ─── LAZY LOAD ROADS DATA ─────────────────
-// ─── LAZY LOAD ROADS DATA ─────────────────
-async function loadRoadsData() {
-  if (State.pathFinder || State.isRoadsLoading) return;
+// ─── START BACKGROUND WORKER ─────────────────────────
+function loadRoadsData() {
+  if (State.routingWorker) return; // Already started
 
-  State.isRoadsLoading = true;
-  document.getElementById("map-loader").classList.add("active");
+  // Adjust path if your app.js is in a /js/ folder (e.g., './routingWorker.js' or '../js/routingWorker.js')
+  State.routingWorker = new Worker("./js/routingWorker.js");
 
-  try {
-    let roadData = null;
+  // Listen for answers from the worker
+  State.routingWorker.onmessage = (e) => {
+    const { type, id, route } = e.data;
 
-    // 1. Check if we have the 40MB file stored in our heavy-duty IndexedDB
-    const cachedRoads = await loadFromDB("dalatRoadsData");
-
-    if (cachedRoads) {
-      console.log("📦 Loading 40MB road data instantly from IndexedDB...");
-      roadData = cachedRoads; // No JSON.parse needed!
-    } else {
+    if (type === "INIT_SUCCESS") {
       console.log(
-        "☁️ Downloading 40MB road data from server (this may take a moment)...",
+        "✅ Background Routing Engine Ready! (Zero Main Thread Block)",
       );
-      const roadRes = await fetch("./data/dalat-roads.geojson");
-      if (roadRes.ok) {
-        roadData = await roadRes.json();
+      State.isRoutingReady = true;
 
-        // Save the massive object to the database for all future visits
-        try {
-          await saveToDB("dalatRoadsData", roadData);
-          console.log("💾 Successfully saved 40MB road data to IndexedDB.");
-        } catch (dbErr) {
-          console.warn("⚠️ Failed to save to IndexedDB.", dbErr);
-        }
-      } else {
-        throw new Error("Failed to fetch roads.");
-      }
-    }
-
-    // 2. Build the Routing Engine
-    if (roadData) {
-      const PathFinderModule =
-        await import("https://cdn.skypack.dev/geojson-path-finder");
-      const PathFinder = PathFinderModule.default || PathFinderModule;
-
-      State.pathFinder = new PathFinder(roadData, { precision: 1e-5 });
-
-      const vertices = [];
-      turf.coordEach(roadData, (coord) => {
-        vertices.push(turf.point(coord));
-      });
-      State.roadVertices = turf.featureCollection(vertices);
-      console.log("✅ Offline Routing Engine Ready!");
-
-      // If user is still on the detail page, re-draw map to snap to roads
+      // If user is looking at a map, trigger a redraw
       if (document.getElementById("detail-page").classList.contains("active")) {
         const item =
           State.currentTrip.days[State.currentDayIdx].items[
@@ -230,13 +198,23 @@ async function loadRoadsData() {
         renderDetailMap(item);
       }
     }
-  } catch (e) {
-    console.warn("⚠️ Could not load road data.", e);
-  } finally {
-    // ALWAYS REMOVE THE LOADER when finished
-    State.isRoadsLoading = false;
-    document.getElementById("map-loader").classList.remove("active");
-  }
+
+    if (type === "ROUTE_RESULT") {
+      // Find the callback waiting for this specific route and trigger it
+      const callback = State.routeCallbacks.get(id);
+      if (callback) {
+        callback(route);
+        State.routeCallbacks.delete(id);
+      }
+    }
+  };
+
+  // Tell the worker to start downloading & parsing
+  // Adjust the URL if your geojson is located elsewhere
+  State.routingWorker.postMessage({
+    type: "INIT",
+    payload: { url: window.location.origin + "/data/dalat-roads.geojson" },
+  });
 }
 // ─── LOAD DATA ────────────────────────────
 async function loadData() {
@@ -248,6 +226,7 @@ async function loadData() {
     State.trips = json.trips;
     State.contents = json.contents || [];
 
+    // ... (keep the State.trips.forEach parsing loop here) ...
     State.trips.forEach((trip) => {
       trip.days.forEach((day) => {
         day.items.forEach((item) => {
@@ -263,6 +242,10 @@ async function loadData() {
         });
       });
     });
+
+    fetchExpenseData();
+    setTimeout(loadRoadsData, 1500);
+
     // 2. Handle URL parameters (Deep linking)
     const params = new URLSearchParams(window.location.search);
     const tripId = params.get("trip");
@@ -282,11 +265,11 @@ async function loadData() {
           );
           if (iIdx !== -1) {
             openDetail(resolvedDayIdx, iIdx);
-            return;
+            return; // Now it's safe to return early!
           }
         }
         openTrip(trip, resolvedDayIdx);
-        return;
+        return; // Now it's safe to return early!
       }
     }
 
@@ -677,7 +660,9 @@ function renderTimeline() {
       <div class="tl-card">
         <div class="tl-card-top">
           <h3>${item.task}</h3>
-          <span class="type-badge ${meta.badge}">${meta.label}</span>
+          <button class="expense-nav-btn" onclick="event.stopPropagation(); openDetail(State.currentDayIdx, ${idx}, 'expense')">
+            💸 Chi tiêu
+          </button>
         </div>
         <div class="tl-location">
           📍 ${(item.locations || [])
@@ -701,33 +686,31 @@ function renderTimeline() {
 }
 
 // ─── DETAIL PAGE ──────────────────────────
-function openDetail(dayIdx, itemIdx) {
+function openDetail(dayIdx, itemIdx, targetTab = "info") {
   State.currentDayIdx = dayIdx;
   State.currentItemIdx = itemIdx;
   showPage("detail-page");
   setNavBack("Timeline", true);
   buildDropdown();
-  renderDetail();
 
-  // CHECK IF WE NEED TO SHOW THE LOADER
-  const item = State.currentTrip.days[dayIdx].items[itemIdx];
-  const prevLoc = getPrevLocation(dayIdx, itemIdx);
-  const pathPoints = [];
-  if (prevLoc) pathPoints.push(prevLoc);
-  if (item.locations) pathPoints.push(...item.locations);
+  // 1. Instantly render the map (draws straight lines if roads aren't loaded yet)
+  renderDetail(targetTab);
 
-  // If there are multiple points (needs routing) AND the routing engine isn't ready
-  if (pathPoints.length > 1 && !State.pathFinder) {
-    document.getElementById("map-loader").classList.add("active");
-  } else {
-    document.getElementById("map-loader").classList.remove("active");
+  // 2. Auto-expand the info panel on mobile
+  if (window.innerWidth <= 768) {
+    State.mobilePanelExpanded = true;
+    document.getElementById("info-panel").classList.add("expanded");
+    // Invalidate map size after the CSS transition finishes
+    setTimeout(() => State.map?.invalidateSize(), 340);
   }
 
-  // Trigger lazy load
+  // 3. Trigger lazy load in the background (will silently re-render snapped roads when done)
   loadRoadsData();
 
+  // 4. Update URL
   const trip = State.currentTrip;
   const day = trip.days[dayIdx];
+  const item = day.items[itemIdx];
   const url = new URL(window.location);
   url.searchParams.set("trip", trip.id);
   url.searchParams.set("day", day.id);
@@ -735,12 +718,11 @@ function openDetail(dayIdx, itemIdx) {
   window.history.pushState({}, "", url);
 }
 
-function renderDetail() {
+function renderDetail(targetTab = "info") {
   const day = State.currentTrip.days[State.currentDayIdx];
   const item = day.items[State.currentItemIdx];
 
   // Top bar
-  // document.getElementById("detail-title").textContent = item.task;
   document.getElementById("detail-time-text").textContent = item.timeLabel;
   document.getElementById("detail-title-text").textContent = item.task;
   document.getElementById("btn-prev").disabled =
@@ -757,7 +739,7 @@ function renderDetail() {
   renderDetailMap(item);
 
   // Default to info tab
-  switchTab("info");
+  switchTab(targetTab);
   renderInfoTab(item);
   renderDirectionTab(item);
   renderContentTab(item);
@@ -774,10 +756,9 @@ function renderDetail() {
 }
 
 // ─── MAP ──────────────────────────────────
-function renderDetailMap(item) {
+async function renderDetailMap(item) {
   const mapEl = document.getElementById("detail-map");
 
-  // 1. Build the path points FIRST so we have coordinates
   const prevLoc = getPrevLocation(State.currentDayIdx, State.currentItemIdx);
   const pathPoints = [];
   if (prevLoc) pathPoints.push(prevLoc);
@@ -785,7 +766,9 @@ function renderDetailMap(item) {
 
   if (pathPoints.length === 0) return;
 
-  // 2. Init Map AND set the view immediately to prevent Leaflet "Set center" errors
+  State.mapRenderId++;
+  const currentRenderId = State.mapRenderId;
+
   if (!State.map) {
     State.map = L.map(mapEl, { zoomControl: true }).setView(
       [pathPoints[0].lat, pathPoints[0].lng],
@@ -797,7 +780,6 @@ function renderDetailMap(item) {
     }).addTo(State.map);
   }
 
-  // Clear previous markers and route
   State.mapMarkers.forEach((m) => m.remove());
   State.mapMarkers = [];
   if (State.routeLayer) {
@@ -813,7 +795,6 @@ function renderDetailMap(item) {
       iconAnchor: [16, 16],
     });
 
-  // Draw the custom markers
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   pathPoints.forEach((loc, idx) => {
     const isImplicitStart = prevLoc && idx === 0;
@@ -830,63 +811,79 @@ function renderDetailMap(item) {
     State.mapMarkers.push(m);
   });
 
-  // DRAW THE PATH
   if (pathPoints.length > 1) {
-    let finalPathLatLangs = [];
+    // 1. INSTANTLY draw dashed straight line placeholder
+    let straightPath = [];
+    pathPoints.forEach((loc) => straightPath.push([loc.lat, loc.lng]));
 
-    for (let i = 0; i < pathPoints.length - 1; i++) {
-      const startLoc = pathPoints[i];
-      const endLoc = pathPoints[i + 1];
-      let routeFound = false;
+    State.routeLayer = L.polyline(straightPath, {
+      color: "#3D5229",
+      weight: 4,
+      opacity: 0.5,
+      dashArray: "8, 8",
+    }).addTo(State.map);
+    State.map.fitBounds(State.routeLayer.getBounds(), { padding: [40, 40] });
 
-      if (State.pathFinder && State.roadVertices) {
-        // ADDED SAFETY NET: Wrap the algorithm in try/catch so it can't crash the map
-        try {
-          const startGeoJSON = turf.point([startLoc.lng, startLoc.lat]);
-          const endGeoJSON = turf.point([endLoc.lng, endLoc.lat]);
+    // 2. ASK WORKER for real route (Non-blocking!)
+    if (State.isRoutingReady && State.routingWorker) {
+      let finalPathLatLangs = [];
 
-          const startNode = turf.nearestPoint(startGeoJSON, State.roadVertices);
-          const endNode = turf.nearestPoint(endGeoJSON, State.roadVertices);
+      for (let i = 0; i < pathPoints.length - 1; i++) {
+        if (currentRenderId !== State.mapRenderId) return; // User moved on
 
-          const route = State.pathFinder.findPath(startNode, endNode);
+        const startLoc = pathPoints[i];
+        const endLoc = pathPoints[i + 1];
 
-          if (route && route.path) {
-            routeFound = true;
-            const segmentLatLangs = route.path.map((coord) => [
-              coord[1],
-              coord[0],
-            ]);
-            finalPathLatLangs.push(...segmentLatLangs);
-          }
-        } catch (err) {
-          console.warn(
-            "Routing failed for this segment, drawing straight line instead:",
-            err,
+        // Create a promise that waits for the worker to respond
+        const routePromise = new Promise((resolve) => {
+          State.routeRequestId++;
+          const reqId = State.routeRequestId;
+          State.routeCallbacks.set(reqId, resolve);
+
+          State.routingWorker.postMessage({
+            type: "ROUTE",
+            id: reqId,
+            payload: {
+              startLat: startLoc.lat,
+              startLng: startLoc.lng,
+              endLat: endLoc.lat,
+              endLng: endLoc.lng,
+            },
+          });
+        });
+
+        // Wait for worker without freezing UI
+        const segmentRoute = await routePromise;
+
+        if (segmentRoute) {
+          finalPathLatLangs.push(...segmentRoute);
+        } else {
+          // Fallback straight line
+          finalPathLatLangs.push(
+            [startLoc.lat, startLoc.lng],
+            [endLoc.lat, endLoc.lng],
           );
         }
       }
 
-      // Fallback to straight line
-      if (!routeFound) {
-        finalPathLatLangs.push(
-          [startLoc.lat, startLoc.lng],
-          [endLoc.lat, endLoc.lng],
-        );
+      // 3. Replace placeholder with final road route
+      if (currentRenderId === State.mapRenderId) {
+        if (State.routeLayer) State.routeLayer.remove();
+        State.routeLayer = L.polyline(finalPathLatLangs, {
+          color: "#3D5229",
+          weight: 5,
+          opacity: 0.8,
+        }).addTo(State.map);
       }
     }
-
-    State.routeLayer = L.polyline(finalPathLatLangs, {
-      color: "#3D5229",
-      weight: 5,
-      opacity: 0.8,
-    }).addTo(State.map);
-
-    State.map.fitBounds(State.routeLayer.getBounds(), { padding: [40, 40] });
   } else {
     State.map.setView([pathPoints[0].lat, pathPoints[0].lng], 16);
   }
 
-  setTimeout(() => State.map.invalidateSize(), 120);
+  setTimeout(() => {
+    if (currentRenderId === State.mapRenderId && State.map)
+      State.map.invalidateSize();
+  }, 120);
 }
 
 window.zoomToPlace = function (lat, lng) {
@@ -1376,11 +1373,67 @@ function waitForLeaflet(cb, retries = 20) {
 const GAS_WEB_APP_URL =
   "https://script.google.com/macros/s/AKfycbyv1AaL-9FmbPDTEzVk9HFaaM3bgO7DczO6bDoU2oK6A2dkZ0Haecbr5Zy19KRPL5E/exec";
 
+window.fetchExpenseData = function () {
+  State.expenseInfo.isLoading = true;
+  updateExpenseUI(); // Make icon spin
+
+  fetch(GAS_WEB_APP_URL)
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.status === "success") {
+        State.expenseInfo.balance = data.balance || 0;
+        State.expenseInfo.totalSpent = data.totalSpent || 0;
+      }
+    })
+    .catch((err) => console.error("Lỗi lấy dữ liệu chi tiêu:", err))
+    .finally(() => {
+      State.expenseInfo.isLoading = false;
+      updateExpenseUI(); // Stop spinning and apply numbers
+    });
+};
+
+// Global function to update just the numbers in the DOM
+function updateExpenseUI() {
+  const balEl = document.getElementById("remainingBalance");
+  const spentEl = document.getElementById("totalSpent");
+  const syncIcon = document.getElementById("syncExpenseBtn");
+
+  if (!balEl || !spentEl) return; // Tab not rendered yet
+
+  if (State.expenseInfo.isLoading) {
+    if (syncIcon) syncIcon.classList.add("fa-spin");
+  } else {
+    if (syncIcon) syncIcon.classList.remove("fa-spin");
+
+    // Only update if we have data, otherwise show "..."
+    if (State.expenseInfo.balance !== null) {
+      balEl.innerText = fmt.cost(State.expenseInfo.balance);
+      balEl.style.color = State.expenseInfo.balance < 0 ? "#c0392b" : "white";
+      spentEl.innerText = fmt.cost(State.expenseInfo.totalSpent);
+    } else {
+      balEl.innerText = "...";
+      spentEl.innerText = "...";
+    }
+  }
+}
+
 function renderExpenseTab(item) {
   const el = document.getElementById("tab-expense");
 
-  // Giao diện form giống ảnh mẫu
   el.innerHTML = `
+    <div style="background: var(--bamboo-darkest); color: white; padding: 16px; border-radius: var(--radius-sm); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow);">
+      <div>
+        <div style="font-size: 0.75rem; opacity: 0.8; text-transform: uppercase;">Còn lại</div>
+        <div id="remainingBalance" style="font-size: 1.4rem; font-weight: 800; font-family: 'Playfair Display', serif;">...</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 0.75rem; opacity: 0.8; text-transform: uppercase;">
+          Đã chi <i class="fas fa-sync-alt" id="syncExpenseBtn" style="cursor:pointer; margin-left: 6px; padding: 4px;" onclick="fetchExpenseData()"></i>
+        </div>
+        <div id="totalSpent" style="font-size: 1.1rem; font-weight: 700;">...</div>
+      </div>
+    </div>
+
     <form id="expenseForm" class="expense-form">
       <div class="form-group">
         <label class="form-label">Event</label>
@@ -1401,7 +1454,7 @@ function renderExpenseTab(item) {
 
       <div class="form-group">
         <label class="form-label">Số tiền</label>
-        <input type="text" id="expAmount" class="form-input" required placeholder="Văn bản câu trả lời ngắn" />
+        <input type="number" id="expAmount" class="form-input" required placeholder="Ví dụ: 50000" />
       </div>
 
       <div class="form-group">
@@ -1417,7 +1470,9 @@ function renderExpenseTab(item) {
     </form>
   `;
 
-  // Xử lý gửi form
+  // Apply the data instantly if we already fetched it on app boot
+  updateExpenseUI();
+
   document
     .getElementById("expenseForm")
     .addEventListener("submit", function (e) {
@@ -1428,7 +1483,6 @@ function renderExpenseTab(item) {
       const fileInput = document.getElementById("expFile");
       const file = fileInput.files[0];
 
-      // Kiểm tra dung lượng tệp
       if (file && file.size > 10 * 1024 * 1024) {
         statusMsg.innerText = "Tệp vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn.";
         statusMsg.style.color = "var(--accent-red)";
@@ -1436,7 +1490,7 @@ function renderExpenseTab(item) {
       }
 
       submitBtn.disabled = true;
-      submitBtn.innerText = "Đang gửi...";
+      submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang gửi...';
       statusMsg.innerText = "";
 
       const payload = {
@@ -1448,12 +1502,10 @@ function renderExpenseTab(item) {
         base64: "",
       };
 
-      // Chuyển file sang Base64
       const reader = new FileReader();
       reader.onload = function (event) {
         payload.base64 = event.target.result.split(",")[1];
 
-        // Gửi fetch API
         fetch(GAS_WEB_APP_URL, {
           method: "POST",
           body: JSON.stringify(payload),
@@ -1465,12 +1517,15 @@ function renderExpenseTab(item) {
               statusMsg.innerText = "🎉 Đã ghi nhận chi tiêu thành công!";
               statusMsg.style.color = "var(--bamboo-mid)";
               document.getElementById("expenseForm").reset();
+
+              // NEW: Fetch new data after successful submission
+              fetchExpenseData();
             } else {
               statusMsg.innerText = "❌ Lỗi server: " + data.message;
               statusMsg.style.color = "var(--accent-red)";
             }
           })
-          .catch((err) => {
+          .catch(() => {
             statusMsg.innerText = "❌ Lỗi kết nối mạng.";
             statusMsg.style.color = "var(--accent-red)";
           })
@@ -1483,6 +1538,7 @@ function renderExpenseTab(item) {
       reader.readAsDataURL(file);
     });
 }
+
 document.addEventListener("DOMContentLoaded", () => {
   waitForLeaflet(loadData);
 });
