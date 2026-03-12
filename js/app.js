@@ -14,6 +14,9 @@ const State = {
   mapMarkers: [],
   routeLayer: null,
   mapRenderId: 0,
+  isRoadsLoading: false,
+
+  roadStatus: "pending", // can be: 'pending', 'loading', 'ready', 'error'
 
   // UI tracking
   mobilePanelExpanded: false,
@@ -174,22 +177,31 @@ window.toggleMobilePanel = function () {
 };
 // ─── START BACKGROUND WORKER ─────────────────────────
 function loadRoadsData() {
-  if (State.routingWorker) return; // Already started
+  if (State.routingWorker || State.isRoadsLoading) return;
+  State.isRoadsLoading = true;
 
-  // Adjust path if your app.js is in a /js/ folder (e.g., './routingWorker.js' or '../js/routingWorker.js')
+  // 1. UPDATE STATUS TO LOADING
+  State.roadStatus = "loading";
+  updateRoadStatusUI();
+
+  // Create the background worker
+  // Note: path is relative to your index.html
   State.routingWorker = new Worker("./js/routingWorker.js");
 
-  // Listen for answers from the worker
+  // Listen for the worker's responses
   State.routingWorker.onmessage = (e) => {
-    const { type, id, route } = e.data;
+    const { type, id, route, error } = e.data;
 
     if (type === "INIT_SUCCESS") {
-      console.log(
-        "✅ Background Routing Engine Ready! (Zero Main Thread Block)",
-      );
+      console.log("✅ Background Routing Engine Ready!");
       State.isRoutingReady = true;
+      State.isRoadsLoading = false;
 
-      // If user is looking at a map, trigger a redraw
+      // 2. UPDATE STATUS TO READY
+      State.roadStatus = "ready";
+      updateRoadStatusUI();
+
+      // Redraw map if currently viewing the detail page
       if (document.getElementById("detail-page").classList.contains("active")) {
         const item =
           State.currentTrip.days[State.currentDayIdx].items[
@@ -199,8 +211,17 @@ function loadRoadsData() {
       }
     }
 
+    if (type === "INIT_ERROR") {
+      console.error("Worker failed:", error);
+      State.isRoadsLoading = false;
+
+      // 3. UPDATE STATUS TO ERROR
+      State.roadStatus = "error";
+      updateRoadStatusUI();
+    }
+
+    // Pass the calculated route back to the map
     if (type === "ROUTE_RESULT") {
-      // Find the callback waiting for this specific route and trigger it
       const callback = State.routeCallbacks.get(id);
       if (callback) {
         callback(route);
@@ -209,11 +230,13 @@ function loadRoadsData() {
     }
   };
 
-  // Tell the worker to start downloading & parsing
-  // Adjust the URL if your geojson is located elsewhere
+  // Start the download & setup process inside the worker
+  // Using document.baseURI ensures the path is correct even on GitHub pages
+  const geojsonUrl = new URL("./data/dalat-roads.geojson", document.baseURI)
+    .href;
   State.routingWorker.postMessage({
     type: "INIT",
-    payload: { url: window.location.origin + "/data/dalat-roads.geojson" },
+    payload: { url: geojsonUrl },
   });
 }
 // ─── LOAD DATA ────────────────────────────
@@ -573,6 +596,27 @@ function openTrip(trip, startDayIdx = null) {
   window.history.pushState({}, "", url);
 }
 
+window.updateRoadStatusUI = function () {
+  const el = document.getElementById("road-status-indicator");
+  if (!el) return; // Tab might not be rendered yet
+
+  if (State.roadStatus === "loading") {
+    el.innerHTML = `<i class="fa fa-spinner fa-spin"></i> Đang tải dữ liệu bản đồ offline (40MB)...`;
+    el.className = "road-status loading";
+    el.style.display = "flex";
+  } else if (State.roadStatus === "ready") {
+    el.innerHTML = `<i class="fa fa-check-circle"></i> Bản đồ offline đã sẵn sàng`;
+    el.className = "road-status ready";
+    el.style.display = "flex";
+  } else if (State.roadStatus === "error") {
+    el.innerHTML = `<i class="fa fa-exclamation-triangle"></i> Lỗi tải bản đồ offline`;
+    el.className = "road-status error";
+    el.style.display = "flex";
+  } else {
+    el.style.display = "none";
+  }
+};
+
 function renderDayTabs() {
   const wrap = document.getElementById("day-tabs");
   wrap.innerHTML = "";
@@ -687,24 +731,29 @@ function renderTimeline() {
 
 // ─── DETAIL PAGE ──────────────────────────
 function openDetail(dayIdx, itemIdx, targetTab = "info") {
+  // NEW: Check if the detail page is ALREADY open before we do anything
+  const wasAlreadyOpen = document
+    .getElementById("detail-page")
+    .classList.contains("active");
+
   State.currentDayIdx = dayIdx;
   State.currentItemIdx = itemIdx;
   showPage("detail-page");
   setNavBack("Timeline", true);
   buildDropdown();
 
-  // 1. Instantly render the map (draws straight lines if roads aren't loaded yet)
+  // 1. Instantly render the map
   renderDetail(targetTab);
 
-  // 2. Auto-expand the info panel on mobile
-  if (window.innerWidth <= 768) {
+  // 2. Auto-expand the info panel on mobile ONLY IF coming from the timeline
+  if (window.innerWidth <= 768 && !wasAlreadyOpen) {
     State.mobilePanelExpanded = true;
     document.getElementById("info-panel").classList.add("expanded");
     // Invalidate map size after the CSS transition finishes
     setTimeout(() => State.map?.invalidateSize(), 340);
   }
 
-  // 3. Trigger lazy load in the background (will silently re-render snapped roads when done)
+  // 3. Trigger lazy load in the background
   loadRoadsData();
 
   // 4. Update URL
@@ -1017,6 +1066,8 @@ function renderDirectionTab(item) {
   });
 
   el.innerHTML = `
+    <div id="road-status-indicator" style="display: none;"></div>
+    
     <div class="dir-header">
       <div style="margin-bottom:6px">
         <span>📍 ${pathPoints[0].name}</span>
@@ -1033,6 +1084,7 @@ function renderDirectionTab(item) {
     <div style="margin-top:14px;padding:10px 13px;background:var(--bamboo-cream);border-radius:var(--radius-sm);font-size:.8rem;color:var(--text-mid)">
       💡 Để có chỉ đường chính xác, nhấn <b>Mở Google Maps</b> trong tab Info.
     </div>`;
+  updateRoadStatusUI();
 }
 function buildMediaHtml(url) {
   if (url.includes("tiktok.com")) {

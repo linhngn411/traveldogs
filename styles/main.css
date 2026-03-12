@@ -1089,6 +1089,33 @@ nav {
   flex-shrink: 0;
 }
 
+/* ======= ROAD STATUS INDICATOR ======= */
+.road-status {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.road-status.loading {
+  background: #fff8e1;
+  color: #f39c12;
+  border: 1px solid #fdebd0;
+}
+.road-status.ready {
+  background: #e8f8f5;
+  color: #1abc9c;
+  border: 1px solid #d1f2eb;
+}
+.road-status.error {
+  background: #fdedec;
+  color: #e74c3c;
+  border: 1px solid #fadbd8;
+}
+
 /* ======= ANIMATIONS ======= */
 @keyframes fadeUp {
   from {
